@@ -6,6 +6,7 @@ fn main() {
     println!("Hello, world!");
     println!("Hello from my-branch");
     println!("i like turtles");
+    println!("my final act");
     
     let mut registers = Registers::new();
     registers.write_byte(RegByte::A, 0x1);
