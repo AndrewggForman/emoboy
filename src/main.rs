@@ -1,11 +1,13 @@
-use crate::registers::{RegByte, Registers};
+use crate::{cpu::Cpu, registers::{RegByte, Registers}};
 
 mod registers;
+mod cpu;
+mod instructions;
 
 fn main() {
     println!("Hello, world!");
     
-    let mut registers = Registers::new();
-    registers.write_byte(RegByte::A, 0x1);
-    println!("{}", registers.read_byte(RegByte::A));
+    // get a cartridge and pass it into the cpu constructor
+
+    let cpu = Cpu::new();
 }
