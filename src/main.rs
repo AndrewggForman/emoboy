@@ -17,7 +17,7 @@ fn main() {
     // get a cartridge and pass it into the cpu constructor
 
     let cpu = Cpu::new();
-    let cartridge = Cartridge::new("dmg_boot.bin");
+    let cartridge = Cartridge::new("assets/dmg_boot.bin");
     //println!("rom_reader: {rom_reader:#?}");
     cartridge.print_all_bytes();
 }
