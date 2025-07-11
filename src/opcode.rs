@@ -17,7 +17,7 @@ pub fn execute_opcode(code: OpCode, cpu: &mut cpu::Cpu)
         OpCode::ADD_A_B => {
             let (result, overflowed) = 
                 cpu.registers.read_byte(RegByte::A).overflowing_add
-                (cpu.registers.read_byte(RegByte::B))
+                (cpu.registers.read_byte(RegByte::B));
         },
         _ => panic!("Invalid OpCode!")
     }    
