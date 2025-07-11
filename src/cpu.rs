@@ -1,9 +1,9 @@
 use crate::{cartridge::{self, Cartridge}, registers::{RegWord, Registers}};
-
+use crate::memory::Memory;
 
 pub struct Cpu {
-    pub registers: Registers,
-    // memory
+    registers: Registers,
+    memory: Memory,
     // graphics
     // sound
     // timers
@@ -22,7 +22,7 @@ impl Cpu {
     pub fn new() -> Self {
         Self {
             registers: Registers::new(),
-            // memory, etc..
+            memory: Memory::new(),
         }
     }
 

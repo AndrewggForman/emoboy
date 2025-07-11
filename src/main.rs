@@ -6,6 +6,7 @@ mod cpu;
 mod clock;
 mod cartridge;
 mod opcode;
+mod memory;
 
 fn main() {
     println!("Hello, world!");
