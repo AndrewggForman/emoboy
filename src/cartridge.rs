@@ -20,7 +20,7 @@ impl Cartridge {
     }
 
     pub fn read_byte(&self, address: usize) -> u8 {
-        0x00
+        self.bytes[address]
     }
 
     pub fn write_byte(&mut self, address: usize, value: u8) {
