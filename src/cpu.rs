@@ -1,6 +1,5 @@
+use crate::{cartridge::{self, Cartridge}, registers::{RegWord, Registers}};
 use crate::memory::Memory;
-use crate::registers::Registers;
-use crate::instructions::Instruction;
 
 pub struct Cpu {
     registers: Registers,
@@ -27,17 +26,14 @@ impl Cpu {
         }
     }
 
-    pub fn step() {
-        // get next instruction
-        // execute instruction
+    pub fn fetch_next_byte(&mut self, cartridge: &Cartridge) -> u8 {
+        let next_byte = cartridge.bytes[self.registers.read_word(RegWord::PC) as usize];
+        self.registers.increment_pc();
+        next_byte
     }
 
-    pub fn get_next_instruction() {
-        // read pc
-        // let instruction = Instruction::create(pc)
+    pub fn read_byte() {
+        
     }
 
-    pub fn execute_instruction(instruction: Instruction) {
-        // match instruction
-    }
 }
