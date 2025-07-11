@@ -1,6 +1,6 @@
-use crate::{registers::{self, RegByte, RegFlag}};
 use crate::clock;
 use crate::cpu;
+use crate::registers::{self, RegByte, RegFlag};
 
 pub enum OpCode {
     ADD_A_B = 0x80,
@@ -9,35 +9,30 @@ pub enum OpCode {
 
 pub enum PrefixOpCode {
     RES_0_B = 0x80,
-
 }
 
-
-pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode)
-{
+pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
     match code {
         OpCode::ADD_A_B => {
             add_register_to_A(cpu, &RegByte::B);
-        },
+        }
         OpCode::ADD_A_C => {
             add_register_to_A(cpu, &RegByte::C);
         }
-        _ => panic!("Invalid OpCode!")
-    }    
+        _ => panic!("Invalid OpCode!"),
+    }
 }
 
 pub fn calculate_half_carry(byte1: u8, byte2: u8) -> bool {
-    // mask top 4 on byte1 + byte2, add them together, check bit4 afterwards
-    let hc = (((byte1 & 0xF) + ( byte2 & 0xF)) & 0x10) == 0x10;
+    // idk what to call this,
+    let hc = (((byte1 & 0xF) + (byte2 & 0xF)) & 0x10) == 0x10;
     hc
 }
-
 
 pub fn update_zero_flag(cpu: &mut cpu::Cpu, result: u8) {
     if result == 0 {
         cpu.registers.write_flag(RegFlag::Zero, true)
-    } 
-    else {
+    } else {
         cpu.registers.write_flag(RegFlag::Zero, false)
     }
 }
@@ -59,37 +54,37 @@ pub fn update_carry_flag(cpu: &mut cpu::Cpu, carry: bool, carry2: bool) {
 }
 
 pub fn add_register_to_A(cpu: &mut cpu::Cpu, register: &RegByte) {
-    let (result, overflowed) = 
-            cpu.registers.read_byte(&RegByte::A).overflowing_add
-                (cpu.registers.read_byte(register));               
+    let (result, overflowed) = cpu
+        .registers
+        .read_byte(&RegByte::A)
+        .overflowing_add(cpu.registers.read_byte(register));
 
-        // Check if there is a half carry between A + B, and then the
-           // > result + the carry 
-        let hc = calculate_half_carry(cpu.registers.read_byte(&RegByte::A),
-            cpu.registers.read_byte(register));
-        let hc2 = calculate_half_carry(result,
-            cpu.registers.read_flag(RegFlag::Carry) as u8);   
+    // Check if there is a half carry between A + B, and then the
+    // > result + the carry
+    let hc = calculate_half_carry(
+        cpu.registers.read_byte(&RegByte::A),
+        cpu.registers.read_byte(register),
+    );
+    let hc2 = calculate_half_carry(result, cpu.registers.read_flag(RegFlag::Carry) as u8);
 
-        // second addition, between original result and carry for final byte
-        let (result2, overflowed2) = 
-            result.overflowing_add(cpu.registers.add_carry());
-        
-        update_carry_flag(cpu, overflowed, overflowed2);
+    // second addition, between original result and carry for final byte
+    let (result2, overflowed2) = result.overflowing_add(cpu.registers.add_carry());
 
-        update_zero_flag(cpu, result2);
+    update_carry_flag(cpu, overflowed, overflowed2);
+    update_zero_flag(cpu, result2);
+    update_half_carry_flag(cpu, hc, hc2);
 
-        update_half_carry_flag(cpu, hc, hc2);
+    cpu.registers.write_byte(RegByte::A, result2);
 
-        cpu.registers.write_byte(RegByte::A, result2);
-
-        cpu.clock.cycle_clock(1);    
+    cpu.clock.cycle_clock(1);
 }
+
 #[cfg(test)]
-mod tests { 
+mod tests {
     use super::*;
 
     #[test]
-    fn execute_op_code_ADD_A_B() {
+    fn execute_op_code_ADD_A_B_add_0_0() {
         // Adding 0 + 0, before
         let mut cpu = cpu::Cpu::new();
 
@@ -109,7 +104,11 @@ mod tests {
         assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
         assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
         assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+    }
 
+    #[test]
+    fn execute_op_code_ADD_A_B_add_0_24() {
+        let mut cpu = cpu::Cpu::new();
 
         cpu.registers.write_byte(RegByte::B, 24);
         assert_eq!(cpu.registers.read_byte(&RegByte::B), 24);
@@ -123,6 +122,11 @@ mod tests {
         assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
         assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
         assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    #[test]
+    fn execute_op_code_ADD_A_B_add_1_15() {
+        let mut cpu = cpu::Cpu::new();
 
         // Setting up new state
         cpu.registers.write_byte(RegByte::A, 15);
@@ -139,6 +143,11 @@ mod tests {
         assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
         assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), true);
         assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    #[test]
+    fn execute_op_code_ADD_A_B_add_243_25() {
+        let mut cpu = cpu::Cpu::new();
 
         // Setting up new state
         cpu.registers.write_byte(RegByte::A, 243);
@@ -155,6 +164,11 @@ mod tests {
         assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
         assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
         assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+    }
+
+    #[test]
+    fn execute_op_code_ADD_A_B_add_200_25_and_carry() {
+        let mut cpu = cpu::Cpu::new();
 
         // Setting up new state
         cpu.registers.write_byte(RegByte::A, 200);

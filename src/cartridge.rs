@@ -11,8 +11,7 @@ pub struct Cartridge {
 impl Cartridge {
     pub fn new(file_path: &str) -> Self {
         Self {
-            bytes: fs::read(file_path)
-            .expect("Expected to be able to read from file. "),
+            bytes: fs::read(file_path).expect("Expected to be able to read from file. "),
         }
     }
 
@@ -25,7 +24,7 @@ impl Cartridge {
         let mut i = 1;
         for byte in self.bytes {
             println!("byte {i}: {byte}");
-            i +=1;
-        }   
+            i += 1;
+        }
     }
 }
