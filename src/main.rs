@@ -3,6 +3,7 @@ use crate::{cpu::Cpu, registers::{RegByte, Registers}};
 mod registers;
 mod cpu;
 mod instructions;
+mod memory;
 
 fn main() {
     println!("Hello, world!");
