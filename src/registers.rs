@@ -55,7 +55,8 @@ impl Registers {
         }
     }
 
-    pub fn read_byte(&self, register: RegByte) -> u8 {
+    // TODO-TALK WITH TINT, changed to take in a &reference regbyte
+    pub fn read_byte(&self, register: &RegByte) -> u8 {
         match register {
             RegByte::A => self.a,
             RegByte::B => self.b,
@@ -132,6 +133,18 @@ impl Registers {
         }
     }
 
+    // TODO might not be needed / changed
+    pub fn add_carry(&mut self) -> u8 {
+        let carry = self.read_flag(RegFlag::Carry);
+        if carry {
+            // Update carry flag has been used
+            self.write_flag(RegFlag::Carry, false);
+            return 1
+        }
+        0
+    }
+
+    // Should be called everytime we do something like fetch_byte(), 
     pub fn increment_pc(&mut self) {
         self.pc += 1;
     }
@@ -153,14 +166,15 @@ mod tests {
         registers.e = 0x6;
         registers.h = 0x7;
         registers.l = 0x8;
-        assert_eq!(registers.read_byte(RegByte::A), 0x1);
-        assert_eq!(registers.read_byte(RegByte::F), 0x2);
-        assert_eq!(registers.read_byte(RegByte::B), 0x3);
-        assert_eq!(registers.read_byte(RegByte::C), 0x4);
-        assert_eq!(registers.read_byte(RegByte::D), 0x5);
-        assert_eq!(registers.read_byte(RegByte::E), 0x6);
-        assert_eq!(registers.read_byte(RegByte::H), 0x7);
-        assert_eq!(registers.read_byte(RegByte::L), 0x8);
+        // TODO TALK TO TINT about &RegByte
+        assert_eq!(registers.read_byte(&RegByte::A), 0x1);
+        assert_eq!(registers.read_byte(&RegByte::F), 0x2);
+        assert_eq!(registers.read_byte(&RegByte::B), 0x3);
+        assert_eq!(registers.read_byte(&RegByte::C), 0x4);
+        assert_eq!(registers.read_byte(&RegByte::D), 0x5);
+        assert_eq!(registers.read_byte(&RegByte::E), 0x6);
+        assert_eq!(registers.read_byte(&RegByte::H), 0x7);
+        assert_eq!(registers.read_byte(&RegByte::L), 0x8);
     }
 
     #[test]
