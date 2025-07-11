@@ -17,7 +17,7 @@ impl Clock {
     }
 
     pub fn cycle_clock(&mut self, cycles: u32) {
-        if cycles < 1 ||cycles > 3 {
+        if cycles < 1 || cycles > 3 {
             panic!("Cycling clock should only be done in cycles of 1, 2, or 3 machine cycles");
         }
 
@@ -27,8 +27,10 @@ impl Clock {
 
     pub fn reset_clock(&mut self) {
         // Just for debugging purposes
-        println!("Resetting Clock!\nCurrent system clock ticks: {}\nCurrent Machine Cycles: {}",
-            self.t_cycles, self.m_cycles);
+        println!(
+            "Resetting Clock!\nCurrent system clock ticks: {}\nCurrent Machine Cycles: {}",
+            self.t_cycles, self.m_cycles
+        );
 
         self.t_cycles = 0;
         self.m_cycles = 0;

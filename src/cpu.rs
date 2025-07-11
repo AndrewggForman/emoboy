@@ -1,9 +1,14 @@
-use crate::{cartridge::{self, Cartridge}, registers::{RegWord, Registers}};
 use crate::memory::Memory;
+use crate::{
+    cartridge::{self, Cartridge},
+    clock::Clock,
+    registers::{RegWord, Registers},
+};
 
 pub struct Cpu {
-    registers: Registers,
+    pub registers: Registers,
     memory: Memory,
+    pub clock: Clock,
     // graphics
     // sound
     // timers
@@ -12,7 +17,7 @@ pub struct Cpu {
     // not exactly sure if it makes sense that a CPU has things like a graphic controller, or sound controller
     // but i think it works for a v1. We could always move stuff around down the line, perhaps with a
     // bus type structure that connects the different components organized within a device struct?
-    
+
     // it makes sense that a cpu should be able to step in some way, but similar to above: not sure
     // if the cpu should be coordinating the steps for the other components or not. but i think the
     // it can also be pushed down the line a bit till more functionality is fleshed out
@@ -23,6 +28,7 @@ impl Cpu {
         Self {
             registers: Registers::new(),
             memory: Memory::new(),
+            clock: Clock::new(),
         }
     }
 
@@ -32,8 +38,5 @@ impl Cpu {
         next_byte
     }
 
-    pub fn read_byte() {
-        
-    }
-
+    pub fn read_byte() {}
 }

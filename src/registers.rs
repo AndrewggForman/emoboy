@@ -19,10 +19,10 @@ pub enum RegWord {
 }
 
 pub enum RegFlag {
-    Zero = 0x80, //        0b1000_0000
+    Zero = 0x80,        //        0b1000_0000
     Subtraction = 0x40, // 0b0100_0000,
-    HalfCarry = 0x20, //   0b0010_0000,
-    Carry = 0x10, //       0b0001_0000
+    HalfCarry = 0x20,   //   0b0010_0000,
+    Carry = 0x10,       //       0b0001_0000
 }
 
 pub struct Registers {
@@ -55,7 +55,8 @@ impl Registers {
         }
     }
 
-    pub fn read_byte(&self, register: RegByte) -> u8 {
+    // TODO-TALK WITH TINT, changed to take in a &reference regbyte
+    pub fn read_byte(&self, register: &RegByte) -> u8 {
         match register {
             RegByte::A => self.a,
             RegByte::B => self.b,
@@ -94,29 +95,30 @@ impl Registers {
 
     pub fn write_word(&mut self, register: RegWord, value: u16) {
         let bytes = value.to_be_bytes();
-        
+
         match register {
             RegWord::AF => {
                 self.a = bytes[0];
                 self.f = bytes[1] & 0xF0; // only top half used in f
-            },
+            }
             RegWord::BC => {
                 self.b = bytes[0];
                 self.c = bytes[1];
-            },
+            }
             RegWord::DE => {
                 self.d = bytes[0];
                 self.e = bytes[1];
-            },
+            }
             RegWord::HL => {
                 self.h = bytes[0];
                 self.l = bytes[1];
-            },
+            }
             RegWord::SP => self.sp = value,
             RegWord::PC => self.pc = value,
         }
     }
 
+    // TODO - reference RegFlag instead of normal RegFlag
     pub fn read_flag(&self, register_flag: RegFlag) -> bool {
         self.f & (register_flag as u8) > 0
     }
@@ -132,6 +134,17 @@ impl Registers {
         }
     }
 
+    pub fn add_carry(&mut self) -> u8 {
+        let carry = self.read_flag(RegFlag::Carry);
+        if carry {
+            // Update carry flag has been used
+            self.write_flag(RegFlag::Carry, false);
+            return 1;
+        }
+        0
+    }
+
+    // Should be called everytime we do something like fetch_byte(),
     pub fn increment_pc(&mut self) {
         self.pc += 1;
     }
@@ -153,14 +166,15 @@ mod tests {
         registers.e = 0x6;
         registers.h = 0x7;
         registers.l = 0x8;
-        assert_eq!(registers.read_byte(RegByte::A), 0x1);
-        assert_eq!(registers.read_byte(RegByte::F), 0x2);
-        assert_eq!(registers.read_byte(RegByte::B), 0x3);
-        assert_eq!(registers.read_byte(RegByte::C), 0x4);
-        assert_eq!(registers.read_byte(RegByte::D), 0x5);
-        assert_eq!(registers.read_byte(RegByte::E), 0x6);
-        assert_eq!(registers.read_byte(RegByte::H), 0x7);
-        assert_eq!(registers.read_byte(RegByte::L), 0x8);
+        // TODO TALK TO TINT about &RegByte
+        assert_eq!(registers.read_byte(&RegByte::A), 0x1);
+        assert_eq!(registers.read_byte(&RegByte::F), 0x2);
+        assert_eq!(registers.read_byte(&RegByte::B), 0x3);
+        assert_eq!(registers.read_byte(&RegByte::C), 0x4);
+        assert_eq!(registers.read_byte(&RegByte::D), 0x5);
+        assert_eq!(registers.read_byte(&RegByte::E), 0x6);
+        assert_eq!(registers.read_byte(&RegByte::H), 0x7);
+        assert_eq!(registers.read_byte(&RegByte::L), 0x8);
     }
 
     #[test]
@@ -200,7 +214,7 @@ mod tests {
         assert_eq!(registers.read_word(RegWord::BC), 0x304);
         assert_eq!(registers.read_word(RegWord::DE), 0x506);
         assert_eq!(registers.read_word(RegWord::HL), 0x708);
-        
+
         // not much point to these tests
         registers.sp = 0x111;
         registers.pc = 0x222;
@@ -211,12 +225,11 @@ mod tests {
     #[test]
     fn write_word_registers() {
         let mut registers = Registers::new();
-        
+
         registers.write_word(RegWord::AF, 0x120);
         registers.write_word(RegWord::BC, 0x304);
         registers.write_word(RegWord::DE, 0x506);
         registers.write_word(RegWord::HL, 0x708);
-        
 
         assert_eq!(registers.a, 0x1);
         assert_eq!(registers.f, 0x20);
@@ -226,7 +239,7 @@ mod tests {
         assert_eq!(registers.e, 0x6);
         assert_eq!(registers.h, 0x7);
         assert_eq!(registers.l, 0x8);
-        
+
         // not much point to these tests
         registers.write_word(RegWord::SP, 0x111);
         registers.write_word(RegWord::PC, 0x222);
@@ -237,14 +250,13 @@ mod tests {
     #[test]
     fn read_flag_registers() {
         let mut registers = Registers::new();
-        
+
         registers.f = 0xF0; // 0b1111_0000
         assert_eq!(registers.read_flag(RegFlag::Zero), true);
         assert_eq!(registers.read_flag(RegFlag::Subtraction), true);
         assert_eq!(registers.read_flag(RegFlag::HalfCarry), true);
         assert_eq!(registers.read_flag(RegFlag::Carry), true);
 
-        
         registers.f = 0x0; // 0b0000_0000
         assert_eq!(registers.read_flag(RegFlag::Zero), false);
         assert_eq!(registers.read_flag(RegFlag::Subtraction), false);
@@ -256,7 +268,7 @@ mod tests {
     fn write_flag_registers() {
         let mut registers = Registers::new();
         registers.f = 0x0; // 0b0000_0000
-        
+
         // setting
         registers.write_flag(RegFlag::Zero, true);
         assert_eq!(registers.f, 0x80); // 0b1000_0000
