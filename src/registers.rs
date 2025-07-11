@@ -134,6 +134,7 @@ impl Registers {
         }
     }
 
+    // Move to OpCode, rename to get_carry_and_update_flag
     pub fn add_carry(&mut self) -> u8 {
         let carry = self.read_flag(RegFlag::Carry);
         if carry {

@@ -24,9 +24,8 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
 }
 
 pub fn calculate_half_carry(byte1: u8, byte2: u8) -> bool {
-    // idk what to call this,
-    let hc = (((byte1 & 0xF) + (byte2 & 0xF)) & 0x10) == 0x10;
-    hc
+    let half_carry = (((byte1 & 0xF) + (byte2 & 0xF)) & 0x10) == 0x10;
+    half_carry
 }
 
 pub fn update_zero_flag(cpu: &mut cpu::Cpu, result: u8) {
@@ -37,8 +36,8 @@ pub fn update_zero_flag(cpu: &mut cpu::Cpu, result: u8) {
     }
 }
 
-pub fn update_half_carry_flag(cpu: &mut cpu::Cpu, hc: bool, hc2: bool) {
-    if hc || hc2 {
+pub fn update_half_carry_flag(cpu: &mut cpu::Cpu, half_carry: bool, half_carry2: bool) {
+    if half_carry || half_carry2 {
         cpu.registers.write_flag(RegFlag::HalfCarry, true);
     } else {
         cpu.registers.write_flag(RegFlag::HalfCarry, false);
@@ -61,18 +60,18 @@ pub fn add_register_to_A(cpu: &mut cpu::Cpu, register: &RegByte) {
 
     // Check if there is a half carry between A + B, and then the
     // > result + the carry
-    let hc = calculate_half_carry(
+    let half_carry = calculate_half_carry(
         cpu.registers.read_byte(&RegByte::A),
         cpu.registers.read_byte(register),
     );
-    let hc2 = calculate_half_carry(result, cpu.registers.read_flag(RegFlag::Carry) as u8);
+    let half_carry2 = calculate_half_carry(result, cpu.registers.read_flag(RegFlag::Carry) as u8);
 
     // second addition, between original result and carry for final byte
     let (result2, overflowed2) = result.overflowing_add(cpu.registers.add_carry());
 
     update_carry_flag(cpu, overflowed, overflowed2);
     update_zero_flag(cpu, result2);
-    update_half_carry_flag(cpu, hc, hc2);
+    update_half_carry_flag(cpu, half_carry, half_carry2);
 
     cpu.registers.write_byte(RegByte::A, result2);
 
