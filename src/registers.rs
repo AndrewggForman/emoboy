@@ -131,6 +131,10 @@ impl Registers {
             self.f = self.f & mask;
         }
     }
+
+    pub fn increment_pc(&mut self) {
+        self.pc += 1;
+    }
 }
 
 #[cfg(test)]
