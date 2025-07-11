@@ -1,9 +1,10 @@
+use crate::memory::Memory;
 use crate::registers::Registers;
 use crate::instructions::Instruction;
 
 pub struct Cpu {
     registers: Registers,
-    // memory
+    memory: Memory,
     // graphics
     // sound
     // timers
@@ -22,7 +23,7 @@ impl Cpu {
     pub fn new() -> Self {
         Self {
             registers: Registers::new(),
-            // memory, etc..
+            memory: Memory::new(),
         }
     }
 
