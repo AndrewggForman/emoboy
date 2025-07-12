@@ -1,4 +1,3 @@
-use crate::clock;
 use crate::cpu;
 use crate::registers::{self, RegByte, RegFlag};
 
