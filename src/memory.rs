@@ -7,6 +7,7 @@ pub struct Memory {
 impl Memory {
     pub fn new() -> Self {
         Self {
+            // this isn't the ram but the entire memory the gameboy has access to,
             ram: vec![0; 0xFFFF],
         }
     }
