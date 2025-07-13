@@ -58,6 +58,15 @@ pub enum OpCode {
     //LD_L_HL_BYTE = 0x6E,
     LD_L_A = 0x6F,
 
+    LD_A_B = 0x78,
+    LD_A_C = 0x79,
+    LD_A_D = 0x7A,
+    LD_A_E = 0x7B,
+    LD_A_H = 0x7C,
+    LD_A_L = 0x7D,
+    //LD_A_HL_BYTE = 0x7E,
+    LD_A_A = 0x7F,
+
     ADD_A_B = 0x80,
     ADD_A_C = 0x81,
     ADD_A_D = 0x82,
@@ -66,6 +75,7 @@ pub enum OpCode {
     ADD_A_L = 0x85,
     //ADD_A_HL_BYTE = 0x86,
     ADD_A_A = 0x87,
+
     ADC_A_B = 0x88,
     ADC_A_C = 0x89,
     ADC_A_D = 0x8A,
@@ -74,6 +84,33 @@ pub enum OpCode {
     ADC_A_L = 0x8D,
     //ADC_A_HL_BYTE = 0x8E,
     ADC_A_A = 0x8F,
+
+    SUB_A_B = 0x90,
+    SUB_A_C = 0x91,
+    SUB_A_D = 0x92,
+    SUB_A_E = 0x93,
+    SUB_A_H = 0x94,
+    SUB_A_L = 0x95,
+    // TODO SUB_A_HL = 0x96,
+    SUB_A_A = 0x97,
+
+    SBC_A_B = 0x98,
+    SBC_A_C = 0x99,
+    SBC_A_D = 0x9A,
+    SBC_A_E = 0x9B,
+    SBC_A_H = 0x9C,
+    SBC_A_L = 0x9D,
+    // TODO SBC_A_HL = 0x9E,
+    SBC_A_A = 0x9F,
+
+    AND_A_B = 0xA0,
+    AND_A_C = 0xA1,
+    AND_A_D = 0xA2,
+    AND_A_E = 0xA3,
+    AND_A_H = 0xA4,
+    AND_A_L = 0xA5,
+    // TODO AND_A_HL = 0xA6,
+    AND_A_A = 0xA7,
 }
 
 pub enum PrefixOpCode {
@@ -220,6 +257,29 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
             load_register_to_register(cpu, RegByte::A, RegByte::L);
         }
 
+        // Load Register into A
+        OpCode::LD_A_B => {
+            load_register_to_register(cpu, RegByte::B, RegByte::A);
+        }
+        OpCode::LD_A_C => {
+            load_register_to_register(cpu, RegByte::C, RegByte::A);
+        }
+        OpCode::LD_A_D => {
+            load_register_to_register(cpu, RegByte::D, RegByte::A);
+        }
+        OpCode::LD_A_E => {
+            load_register_to_register(cpu, RegByte::E, RegByte::A);
+        }
+        OpCode::LD_A_H => {
+            load_register_to_register(cpu, RegByte::H, RegByte::A);
+        }
+        OpCode::LD_A_L => {
+            load_register_to_register(cpu, RegByte::L, RegByte::A);
+        }
+        OpCode::LD_A_A => {
+            load_register_to_register(cpu, RegByte::A, RegByte::A);
+        }
+
         // Add Register to A
         OpCode::ADD_A_B => {
             add_register_to_A(cpu, &RegByte::B);
@@ -265,6 +325,97 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
         OpCode::ADC_A_A => {
             add_register_and_carry_to_A(cpu, &RegByte::A);
         }
+
+        // Subtract Register from A
+        OpCode::SUB_A_B => {
+            let value = cpu.registers.read_byte(&RegByte::B);
+            subtract_from_a(cpu, value);
+        }
+        OpCode::SUB_A_C => {
+            let value = cpu.registers.read_byte(&RegByte::C);
+            subtract_from_a(cpu, value);
+        }
+        OpCode::SUB_A_D => {
+            let value = cpu.registers.read_byte(&RegByte::D);
+            subtract_from_a(cpu, value);
+        }
+        OpCode::SUB_A_E => {
+            let value = cpu.registers.read_byte(&RegByte::E);
+            subtract_from_a(cpu, value);
+        }
+        OpCode::SUB_A_H => {
+            let value = cpu.registers.read_byte(&RegByte::H);
+            subtract_from_a(cpu, value);
+        }
+        OpCode::SUB_A_L => {
+            let value = cpu.registers.read_byte(&RegByte::L);
+            subtract_from_a(cpu, value);
+        }
+        OpCode::SUB_A_A => {
+            let value = cpu.registers.read_byte(&RegByte::A);
+            subtract_from_a(cpu, value);
+        }
+
+        // Subtract (Register + Carry) from A
+        OpCode::SBC_A_B => {
+            let value = cpu.registers.read_byte(&RegByte::B);
+            subtract_from_a_carry(cpu, value);
+        }
+        OpCode::SBC_A_C => {
+            let value = cpu.registers.read_byte(&RegByte::C);
+            subtract_from_a_carry(cpu, value);
+        }
+        OpCode::SBC_A_D => {
+            let value = cpu.registers.read_byte(&RegByte::D);
+            subtract_from_a_carry(cpu, value);
+        }
+        OpCode::SBC_A_E => {
+            let value = cpu.registers.read_byte(&RegByte::E);
+            subtract_from_a_carry(cpu, value);
+        }
+        OpCode::SBC_A_H => {
+            let value = cpu.registers.read_byte(&RegByte::H);
+            subtract_from_a_carry(cpu, value);
+        }
+        OpCode::SBC_A_L => {
+            let value = cpu.registers.read_byte(&RegByte::L);
+            subtract_from_a_carry(cpu, value);
+        }
+        OpCode::SBC_A_A => {
+            let value = cpu.registers.read_byte(&RegByte::A);
+            subtract_from_a_carry(cpu, value);
+        }
+
+        // Set A to Bitwise AND from register
+        OpCode::AND_A_B => {
+            let value = cpu.registers.read_byte(&RegByte::B);
+            bitwise_and_a(cpu, value);
+        }
+        OpCode::AND_A_C => {
+            let value = cpu.registers.read_byte(&RegByte::C);
+            bitwise_and_a(cpu, value);
+        }
+        OpCode::AND_A_D => {
+            let value = cpu.registers.read_byte(&RegByte::D);
+            bitwise_and_a(cpu, value);
+        }
+        OpCode::AND_A_E => {
+            let value = cpu.registers.read_byte(&RegByte::E);
+            bitwise_and_a(cpu, value);
+        }
+        OpCode::AND_A_H => {
+            let value = cpu.registers.read_byte(&RegByte::H);
+            bitwise_and_a(cpu, value);
+        }
+        OpCode::AND_A_L => {
+            let value = cpu.registers.read_byte(&RegByte::L);
+            bitwise_and_a(cpu, value);
+        }
+        OpCode::AND_A_A => {
+            let value = cpu.registers.read_byte(&RegByte::A);
+            bitwise_and_a(cpu, value);
+        }
+
         _ => panic!("Invalid OpCode!"),
     }
 }
@@ -353,7 +504,7 @@ pub fn load_register_to_register(
     receiving_register: RegByte,
 ) {
     // When The registers are the same, aka Load A to A, nothing should happen except the clock
-    if std::ptr::eq(&sending_register, &receiving_register) {
+    if sending_register == receiving_register {
         cpu.clock.cycle_clock(1);
         return;
     }
@@ -388,6 +539,54 @@ pub fn load_register_to_register(
 
 //     cpu.clock.cycle_clock(1);
 // }
+
+pub fn subtract_from_a(cpu: &mut cpu::Cpu, value: u8) {
+    let a_value = cpu.registers.read_byte(&RegByte::A);
+    let (result, is_borrow) = a_value.overflowing_sub(value);
+
+    // check if we would have to borrow from the 5th bit
+    let is_half_borrow = (a_value & 0xF) < (value & 0xF);
+
+    cpu.registers.write_flag(RegFlag::Zero, result == 0);
+    cpu.registers.write_flag(RegFlag::Subtraction, true);
+    cpu.registers.write_flag(RegFlag::HalfCarry, is_half_borrow);
+    cpu.registers.write_flag(RegFlag::Carry, is_borrow);
+
+    cpu.registers.write_byte(RegByte::A, result);
+}
+
+// TODO could maybe condense with subtract_from_a?
+pub fn subtract_from_a_carry(cpu: &mut cpu::Cpu, value: u8) {
+    if !cpu.registers.read_flag(RegFlag::Carry) {
+        return subtract_from_a(cpu, value);
+    }
+
+    let a_value = cpu.registers.read_byte(&RegByte::A);
+    let result = a_value.wrapping_sub(value).wrapping_sub(1);
+
+    // check if we would have to borrow from the 5th bit
+    let is_half_borrow = (a_value & 0xF) < ((value & 0xF) + 1);
+    let is_borrow = value == 0xFF || a_value < (value + 1);
+
+    cpu.registers.write_flag(RegFlag::Zero, result == 0);
+    cpu.registers.write_flag(RegFlag::Subtraction, true);
+    cpu.registers.write_flag(RegFlag::HalfCarry, is_half_borrow);
+    cpu.registers.write_flag(RegFlag::Carry, is_borrow);
+
+    cpu.registers.write_byte(RegByte::A, result);
+}
+
+pub fn bitwise_and_a(cpu: &mut cpu::Cpu, value: u8) {
+    let a_value = cpu.registers.read_byte(&RegByte::A);
+    let result = a_value & value;
+
+    cpu.registers.write_flag(RegFlag::Zero, result == 0);
+    cpu.registers.write_flag(RegFlag::Subtraction, false);
+    cpu.registers.write_flag(RegFlag::HalfCarry, true);
+    cpu.registers.write_flag(RegFlag::Carry, false);
+
+    cpu.registers.write_byte(RegByte::A, result);
+}
 
 #[cfg(test)]
 mod tests {
@@ -543,5 +742,243 @@ mod tests {
         assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
         assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
         assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    // LOAD tests
+    #[test]
+    fn load_b_to_a() {
+        let mut cpu = cpu::Cpu::new();
+
+        // Setting up new state
+        cpu.registers.write_byte(RegByte::A, 100);
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 100);
+        cpu.registers.write_byte(RegByte::B, 25);
+        assert_eq!(cpu.registers.read_byte(&RegByte::D), 25);
+        cpu.registers.write_flag(RegFlag::Carry, true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+
+        // Adding B = 25, to A = 200, should be A=226 due to carry preset to true
+        execute_opcode(&mut cpu, OpCode::LD_A_B);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 201);
+        assert_eq!(cpu.registers.read_byte(&RegByte::D), 25);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    // TODO these names are getting a bit outta hand
+    #[test]
+    fn subtract_from_a_nop() {
+        let mut cpu = cpu::Cpu::new();
+
+        subtract_from_a(&mut cpu, 0);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    #[test]
+    fn subtract_from_a_zero() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_byte(RegByte::A, 1);
+        subtract_from_a(&mut cpu, 1);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    #[test]
+    fn subtract_from_a_half_borrow() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_byte(RegByte::A, 0b10000);
+        subtract_from_a(&mut cpu, 0b01111);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 1);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    #[test]
+    fn subtract_from_a_borrow() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_byte(RegByte::A, 0b1000_0000);
+        subtract_from_a(&mut cpu, 0b1100_0000);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b1100_0000);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+    }
+
+    #[test]
+    fn subtract_from_a_borrow_half_borrow() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_byte(RegByte::A, 0b1000_0000);
+        subtract_from_a(&mut cpu, 0b1100_1000);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b10111000);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+    }
+
+    #[test]
+    fn subtract_from_a_carry_nop() {
+        let mut cpu = cpu::Cpu::new();
+
+        subtract_from_a_carry(&mut cpu, 0);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    #[test]
+    fn subtract_from_a_carry_nop_carry() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_flag(RegFlag::Carry, true);
+        cpu.registers.write_byte(RegByte::A, 1);
+        subtract_from_a_carry(&mut cpu, 0);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    #[test]
+    fn subtract_from_a_carry_zero() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_byte(RegByte::A, 1);
+        subtract_from_a_carry(&mut cpu, 1);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    #[test]
+    fn subtract_from_a_carry_zero_carry() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_flag(RegFlag::Carry, true);
+        cpu.registers.write_byte(RegByte::A, 1);
+        subtract_from_a_carry(&mut cpu, 0);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    #[test]
+    fn subtract_from_a_carry_half_borrow() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_byte(RegByte::A, 0b10000);
+        subtract_from_a_carry(&mut cpu, 0b01111);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 1);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    #[test]
+    fn subtract_from_a_carry_half_borrow_carry() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_flag(RegFlag::Carry, true);
+        cpu.registers.write_byte(RegByte::A, 0b10000);
+        subtract_from_a_carry(&mut cpu, 0b01110);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 1);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    #[test]
+    fn subtract_from_a_carry_borrow() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_byte(RegByte::A, 0b1000_0000);
+        subtract_from_a_carry(&mut cpu, 0b1100_0000);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b1100_0000);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+    }
+
+    #[test]
+    fn subtract_from_a_carry_borrow_carry() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_flag(RegFlag::Carry, true);
+        cpu.registers.write_byte(RegByte::A, 0b1000_0001);
+        subtract_from_a_carry(&mut cpu, 0b1100_0000);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b1100_0000);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+    }
+
+    #[test]
+    fn subtract_from_a_carry_borrow_half_borrow() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_byte(RegByte::A, 0b1000_0000);
+        subtract_from_a_carry(&mut cpu, 0b1100_1000);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b10111000);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+    }
+
+    #[test]
+    fn subtract_from_a_carry_borrow_half_borrow_carry() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_flag(RegFlag::Carry, true);
+        cpu.registers.write_byte(RegByte::A, 0b1000_0000);
+        subtract_from_a_carry(&mut cpu, 0b1100_0111);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b10111000);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
     }
 }
