@@ -1,9 +1,5 @@
 use crate::cartridge::Cartridge;
 use crate::cpu::Cpu;
-use crate::{
-    cpu::Cpu,
-    registers::{RegByte, Registers},
-};
 
 mod cartridge;
 mod clock;
