@@ -431,7 +431,7 @@ pub fn load_register_to_register(
     receiving_register: RegByte,
 ) {
     // When The registers are the same, aka Load A to A, nothing should happen except the clock
-    if std::ptr::eq(&sending_register, &receiving_register) {
+    if sending_register == receiving_register {
         cpu.clock.cycle_clock(1);
         return;
     }
@@ -800,7 +800,7 @@ mod tests {
         assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
     }
 
-     #[test]
+    #[test]
     fn subtract_from_a_carry_half_borrow_carry() {
         let mut cpu = cpu::Cpu::new();
 
