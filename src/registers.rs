@@ -19,10 +19,10 @@ pub enum RegWord {
 }
 
 pub enum RegFlag {
-    Zero = 0x80,        //        0b1000_0000
-    Subtraction = 0x40, // 0b0100_0000,
-    HalfCarry = 0x20,   //   0b0010_0000,
-    Carry = 0x10,       //       0b0001_0000
+    Zero = 0x80,        // 0b1000_0000
+    Subtraction = 0x40, // 0b0100_0000
+    HalfCarry = 0x20,   // 0b0010_0000
+    Carry = 0x10,       // 0b0001_0000
 }
 
 pub struct Registers {

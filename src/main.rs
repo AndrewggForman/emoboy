@@ -1,4 +1,5 @@
 use crate::cartridge::Cartridge;
+use crate::cpu::Cpu;
 use crate::{
     cpu::Cpu,
     registers::{RegByte, Registers},
@@ -16,8 +17,8 @@ fn main() {
 
     // get a cartridge and pass it into the cpu constructor
 
-    let cpu = Cpu::new();
-    let cartridge = Cartridge::new("dmg_boot.bin");
-    //println!("rom_reader: {rom_reader:#?}");
-    cartridge.print_all_bytes();
+    let mut cpu = Cpu::new();
+
+    // TODO this feels wrong, why does cpu load a rom. might need to add a motherboard/device type struct eventually
+    cpu.load_rom_file("assets/dmg_boot.bin");
 }

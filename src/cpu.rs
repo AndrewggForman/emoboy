@@ -1,6 +1,6 @@
 use crate::memory::Memory;
 use crate::{
-    cartridge::{self, Cartridge},
+    cartridge::Cartridge,
     clock::Clock,
     registers::{RegWord, Registers},
 };
@@ -13,6 +13,7 @@ pub struct Cpu {
     // sound
     // timers
     // inputs
+    // IME flag
 
     // not exactly sure if it makes sense that a CPU has things like a graphic controller, or sound controller
     // but i think it works for a v1. We could always move stuff around down the line, perhaps with a
@@ -38,5 +39,7 @@ impl Cpu {
         next_byte
     }
 
-    pub fn read_byte() {}
+    pub fn load_rom_file(&mut self, file_path: &str) {
+        self.memory.load_rom_file(file_path);
+    }
 }
