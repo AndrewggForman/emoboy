@@ -265,7 +265,6 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
         OpCode::ADC_A_A => {
             add_register_and_carry_to_A(cpu, &RegByte::A);
         }
-
         _ => panic!("Invalid OpCode!"),
     }
 }
