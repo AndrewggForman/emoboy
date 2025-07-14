@@ -47,7 +47,7 @@ impl Memory {
                 self.cartridge.read_byte(address) // TODO
             }
             VRAM_START..=VRAM_END => self._memory[address as usize],
-            CARTRIDGE_RAM_START..=CARTRIDGE_RAM_END => self.cartridge.read_byte(address as usize),
+            CARTRIDGE_RAM_START..=CARTRIDGE_RAM_END => self.cartridge.read_byte(address),
             WRAM_START..=WRAM_END => self._memory[address as usize],
             PROHIBITED_ECHO_RAM_START..=PROHIBITED_ECHO_RAM_END => panic!("PROHIBITED_ECHO_RAM"),
             OAM_START..=OAM_END => self._memory[address as usize],

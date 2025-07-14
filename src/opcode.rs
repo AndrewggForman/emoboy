@@ -171,9 +171,9 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
         }
         OpCode::LD_B_HL => {
             let address = cpu.registers.read_word(RegWord::HL);
-            let value = get_8bit_stored_in_16bit(cpu, address);
+            let value = cpu.memory.read_byte(address);
             cpu.clock.cycle_clock(1); // TODO - Talk with tint, kind of hacky...
-            load_8bit_to_register(cpu, value, RegByte::B);
+            cpu.registers.write_byte(RegByte::B, value);
         }
         OpCode::LD_B_A => {
             load_register_to_register(cpu, RegByte::A, RegByte::B);
@@ -200,9 +200,9 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
         }
         OpCode::LD_C_HL => {
             let address = cpu.registers.read_word(RegWord::HL);
-            let value = get_8bit_stored_in_16bit(cpu, address);
+            let value = cpu.memory.read_byte(address);
             cpu.clock.cycle_clock(1);
-            load_8bit_to_register(cpu, value, RegByte::C);
+            cpu.registers.write_byte(RegByte::C, value);
         }
         OpCode::LD_C_A => {
             load_register_to_register(cpu, RegByte::A, RegByte::C);
@@ -229,9 +229,9 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
         }
         OpCode::LD_D_HL => {
             let address = cpu.registers.read_word(RegWord::HL);
-            let value = get_8bit_stored_in_16bit(cpu, address);
+            let value = cpu.memory.read_byte(address);
             cpu.clock.cycle_clock(1);
-            load_8bit_to_register(cpu, value, RegByte::D);
+            cpu.registers.write_byte(RegByte::D, value);
         }
         OpCode::LD_D_A => {
             load_register_to_register(cpu, RegByte::A, RegByte::D);
@@ -258,9 +258,9 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
         }
         OpCode::LD_E_HL => {
             let address = cpu.registers.read_word(RegWord::HL);
-            let value = get_8bit_stored_in_16bit(cpu, address);
+            let value = cpu.memory.read_byte(address);
             cpu.clock.cycle_clock(1);
-            load_8bit_to_register(cpu, value, RegByte::E);
+            cpu.registers.write_byte(RegByte::E, value);
         }
         OpCode::LD_E_A => {
             load_register_to_register(cpu, RegByte::A, RegByte::E);
@@ -287,9 +287,9 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
         }
         OpCode::LD_H_HL => {
             let address = cpu.registers.read_word(RegWord::HL);
-            let value = get_8bit_stored_in_16bit(cpu, address);
+            let value = cpu.memory.read_byte(address);
             cpu.clock.cycle_clock(1);
-            load_8bit_to_register(cpu, value, RegByte::H);
+            cpu.registers.write_byte(RegByte::H, value);
         }
         OpCode::LD_H_A => {
             load_register_to_register(cpu, RegByte::A, RegByte::H);
@@ -316,9 +316,9 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
         }
         OpCode::LD_L_HL => {
             let address = cpu.registers.read_word(RegWord::HL);
-            let value = get_8bit_stored_in_16bit(cpu, address);
+            let value = cpu.memory.read_byte(address);
             cpu.clock.cycle_clock(1);
-            load_8bit_to_register(cpu, value, RegByte::L);
+            cpu.registers.write_byte(RegByte::L, value);
         }
         OpCode::LD_L_A => {
             load_register_to_register(cpu, RegByte::A, RegByte::L);
@@ -345,9 +345,9 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
         }
         OpCode::LD_A_HL => {
             let address = cpu.registers.read_word(RegWord::HL);
-            let value = get_8bit_stored_in_16bit(cpu, address);
+            let value = cpu.memory.read_byte(address);
             cpu.clock.cycle_clock(1);
-            load_8bit_to_register(cpu, value, RegByte::A);
+            cpu.registers.write_byte(RegByte::A, value);
         }
         OpCode::LD_A_A => {
             load_register_to_register(cpu, RegByte::A, RegByte::A);
@@ -380,7 +380,7 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
         }
         OpCode::ADD_A_HL => {
             let address = cpu.registers.read_word(RegWord::HL);
-            let value = get_8bit_stored_in_16bit(cpu, address);
+            let value = cpu.memory.read_byte(address);
             cpu.clock.cycle_clock(1); // TODO - Talk with tint, kind of hacky...
             add_to_a(cpu, value);
         }
@@ -416,7 +416,7 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
         }
         OpCode::ADC_A_HL => {
             let address = cpu.registers.read_word(RegWord::HL);
-            let value = get_8bit_stored_in_16bit(cpu, address);
+            let value = cpu.memory.read_byte(address);
             cpu.clock.cycle_clock(1);
             add_to_a_carry(cpu, value);
         }
@@ -452,7 +452,7 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
         }
         OpCode::SUB_A_HL => {
             let address = cpu.registers.read_word(RegWord::HL);
-            let value = get_8bit_stored_in_16bit(cpu, address);
+            let value = cpu.memory.read_byte(address);
             cpu.clock.cycle_clock(1);
             subtract_from_a(cpu, value);
         }
@@ -488,7 +488,7 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
         }
         OpCode::SBC_A_HL => {
             let address = cpu.registers.read_word(RegWord::HL);
-            let value = get_8bit_stored_in_16bit(cpu, address);
+            let value = cpu.memory.read_byte(address);
             cpu.clock.cycle_clock(1);
             subtract_from_a_carry(cpu, value);
         }
@@ -524,7 +524,7 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
         }
         OpCode::AND_A_HL => {
             let address = cpu.registers.read_word(RegWord::HL);
-            let value = get_8bit_stored_in_16bit(cpu, address);
+            let value = cpu.memory.read_byte(address);
             cpu.clock.cycle_clock(1);
             bitwise_and_a(cpu, value);
         }
@@ -560,7 +560,7 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
         }
         OpCode::XOR_A_HL => {
             let address = cpu.registers.read_word(RegWord::HL);
-            let value = get_8bit_stored_in_16bit(cpu, address);
+            let value = cpu.memory.read_byte(address);
             cpu.clock.cycle_clock(1);
             bitwise_xor_a(cpu, value);
         }
@@ -596,7 +596,7 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
         }
         OpCode::OR_A_HL => {
             let address = cpu.registers.read_word(RegWord::HL);
-            let value = get_8bit_stored_in_16bit(cpu, address);
+            let value = cpu.memory.read_byte(address);
             cpu.clock.cycle_clock(1);
             bitwise_or_a(cpu, value);
         }
@@ -632,8 +632,7 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
         }
         OpCode::CP_A_HL => {
             let address = cpu.registers.read_word(RegWord::HL);
-            let value = get_8bit_stored_in_16bit(cpu, address);
-            cpu.clock.cycle_clock(1);
+            let value = cpu.memory.read_byte(address);
             compare_to_a(cpu, value);
         }
         OpCode::CP_A_A => {
@@ -646,10 +645,10 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
 }
 
 // TODO - Name change, will be used soon for a lot.
-pub fn get_8bit_stored_in_16bit(cpu: &mut cpu::Cpu, address: u16) -> u8 {
-    let value = cpu.memory.read_byte(address);
-    value
-}
+// pub fn get_8bit_stored_in_16bit(cpu: &mut cpu::Cpu, address: u16) -> u8 {
+//     let value = cpu.memory.read_byte(address);
+//     value
+// }
 
 pub fn calculate_half_carry(byte1: u8, byte2: u8) -> bool {
     let half_carry = (((byte1 & 0xF) + (byte2 & 0xF)) & 0x10) == 0x10;
@@ -682,15 +681,15 @@ pub fn update_carry_flag(cpu: &mut cpu::Cpu, carry: bool, carry2: bool) {
 
 pub fn add_to_a(cpu: &mut cpu::Cpu, value: u8) {
     let a_value = cpu.registers.read_byte(&RegByte::A);
-    let (result, is_borrow) = a_value.overflowing_add(value);
+    let (result, is_carry) = a_value.overflowing_add(value);
 
-    // check if we would have to borrow from the 5th bit
+    // check if we would have a carry
     let half_carry = calculate_half_carry(a_value, value);
 
     cpu.registers.write_flag(RegFlag::Zero, result == 0);
     cpu.registers.write_flag(RegFlag::Subtraction, false);
     cpu.registers.write_flag(RegFlag::HalfCarry, half_carry);
-    cpu.registers.write_flag(RegFlag::Carry, is_borrow);
+    cpu.registers.write_flag(RegFlag::Carry, is_carry);
 
     cpu.registers.write_byte(RegByte::A, result);
 
@@ -733,11 +732,6 @@ pub fn load_register_to_register(
         cpu.registers.read_byte(&sending_register),
     );
 
-    cpu.clock.cycle_clock(1);
-}
-
-pub fn load_8bit_to_register(cpu: &mut cpu::Cpu, value: u8, register: RegByte) {
-    cpu.registers.write_byte(register, value);
     cpu.clock.cycle_clock(1);
 }
 
@@ -955,7 +949,7 @@ mod tests {
         cpu.registers.write_word(RegWord::HL, 65410);
         assert_eq!(cpu.registers.read_word(RegWord::HL), 65410);
         cpu.memory.write_byte(65410, 99);
-        let value = get_8bit_stored_in_16bit(&mut cpu, 65410);
+        let value = cpu.memory.read_byte(65410);
         assert_eq!(value, 99);
 
         cpu.registers.write_byte(RegByte::A, 200);
