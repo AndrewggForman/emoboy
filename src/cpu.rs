@@ -7,7 +7,7 @@ use crate::{
 
 pub struct Cpu {
     pub registers: Registers,
-    memory: Memory,
+    pub memory: Memory, // TODO-Talk with tint, was memory supposed to be private? I don't know how else to access it in op-codes to do HL commands
     pub clock: Clock,
     // graphics
     // sound

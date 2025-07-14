@@ -19,12 +19,12 @@ impl Cartridge {
         self.print_all_bytes();
     }
 
-    pub fn read_byte(&self, address: usize) -> u8 {
-        self.bytes[address]
+    pub fn read_byte(&self, address: u16) -> u8 {
+        self.bytes[address as usize]
     }
 
-    pub fn write_byte(&mut self, address: usize, value: u8) {
-        self.bytes[address] = value;
+    pub fn write_byte(&mut self, address: u16, value: u8) {
+        self.bytes[address as usize] = value;
     }
 
     // just for testing/reading purposes
