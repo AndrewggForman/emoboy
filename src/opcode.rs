@@ -145,6 +145,7 @@ pub enum OpCode {
 
 pub enum PrefixOpCode {
     RES_0_B = 0x80,
+    //TODO MORE
 }
 
 pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
