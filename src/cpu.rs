@@ -1,3 +1,4 @@
+use crate::gpu::Gpu;
 use crate::memory::Memory;
 use crate::{
     cartridge::Cartridge,
@@ -9,7 +10,7 @@ pub struct Cpu {
     pub registers: Registers,
     pub memory: Memory, // TODO-Talk with tint, was memory supposed to be private? I don't know how else to access it in op-codes to do HL commands
     pub clock: Clock,
-    // graphics
+    gpu: Gpu,
     // sound
     // timers
     // inputs
@@ -30,6 +31,7 @@ impl Cpu {
             registers: Registers::new(),
             memory: Memory::new(),
             clock: Clock::new(),
+            gpu: Gpu::new(),
         }
     }
 

@@ -8,6 +8,7 @@ mod cpu;
 mod memory;
 mod opcode;
 mod registers;
+mod gpu;
 
 fn main() {
     println!("Hello, world!");
