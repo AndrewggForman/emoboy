@@ -34,7 +34,7 @@ impl Cpu {
     }
 
     pub fn fetch_next_byte(&mut self, cartridge: &Cartridge) -> u8 {
-        let next_byte = cartridge.bytes[self.registers.read_word(RegWord::PC) as usize];
+        let next_byte = cartridge.bytes[self.registers.read_word(&RegWord::PC) as usize];
         self.registers.increment_pc();
         next_byte
     }

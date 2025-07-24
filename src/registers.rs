@@ -56,7 +56,6 @@ impl Registers {
         }
     }
 
-    // TODO-TALK WITH TINT, changed to take in a &reference regbyte
     pub fn read_byte(&self, register: &RegByte) -> u8 {
         match register {
             RegByte::A => self.a,
@@ -70,7 +69,7 @@ impl Registers {
         }
     }
 
-    pub fn write_byte(&mut self, register: RegByte, value: u8) {
+    pub fn write_byte(&mut self, register: &RegByte, value: u8) {
         match register {
             RegByte::A => self.a = value,
             RegByte::B => self.b = value,
@@ -83,7 +82,7 @@ impl Registers {
         }
     }
 
-    pub fn read_word(&self, register: RegWord) -> u16 {
+    pub fn read_word(&self, register: &RegWord) -> u16 {
         match register {
             RegWord::AF => u16::from_be_bytes([self.a, self.f]),
             RegWord::BC => u16::from_be_bytes([self.b, self.c]),
@@ -94,7 +93,7 @@ impl Registers {
         }
     }
 
-    pub fn write_word(&mut self, register: RegWord, value: u16) {
+    pub fn write_word(&mut self, register: &RegWord, value: u16) {
         let bytes = value.to_be_bytes();
 
         match register {
@@ -119,7 +118,9 @@ impl Registers {
         }
     }
 
-    // TODO - reference RegFlag instead of normal RegFlag
+    // TODO - Not sure how to change this to a reference to RegFlag w/o breaking?
+    // > Seems like we can't cast as u8 if we reference it/deference with raw pointer
+    // > and I don't get how the read_flag even works
     pub fn read_flag(&self, register_flag: RegFlag) -> bool {
         self.f & (register_flag as u8) > 0
     }
@@ -183,14 +184,14 @@ mod tests {
     fn write_byte_registers() {
         // not much point to this test since read logic is so simple
         let mut registers = Registers::new();
-        registers.write_byte(RegByte::A, 0x1);
-        registers.write_byte(RegByte::F, 0x22);
-        registers.write_byte(RegByte::B, 0x3);
-        registers.write_byte(RegByte::C, 0x4);
-        registers.write_byte(RegByte::D, 0x5);
-        registers.write_byte(RegByte::E, 0x6);
-        registers.write_byte(RegByte::H, 0x7);
-        registers.write_byte(RegByte::L, 0x8);
+        registers.write_byte(&RegByte::A, 0x1);
+        registers.write_byte(&RegByte::F, 0x22);
+        registers.write_byte(&RegByte::B, 0x3);
+        registers.write_byte(&RegByte::C, 0x4);
+        registers.write_byte(&RegByte::D, 0x5);
+        registers.write_byte(&RegByte::E, 0x6);
+        registers.write_byte(&RegByte::H, 0x7);
+        registers.write_byte(&RegByte::L, 0x8);
         assert_eq!(registers.a, 0x1);
         assert_eq!(registers.f, 0x20); // lower half should be zeroed out 0x22 -> 0x20
         assert_eq!(registers.b, 0x3);
@@ -212,26 +213,26 @@ mod tests {
         registers.e = 0x6;
         registers.h = 0x7;
         registers.l = 0x8;
-        assert_eq!(registers.read_word(RegWord::AF), 0x102);
-        assert_eq!(registers.read_word(RegWord::BC), 0x304);
-        assert_eq!(registers.read_word(RegWord::DE), 0x506);
-        assert_eq!(registers.read_word(RegWord::HL), 0x708);
+        assert_eq!(registers.read_word(&RegWord::AF), 0x102);
+        assert_eq!(registers.read_word(&RegWord::BC), 0x304);
+        assert_eq!(registers.read_word(&RegWord::DE), 0x506);
+        assert_eq!(registers.read_word(&RegWord::HL), 0x708);
 
         // not much point to these tests
         registers.sp = 0x111;
         registers.pc = 0x222;
-        assert_eq!(registers.read_word(RegWord::SP), 0x111);
-        assert_eq!(registers.read_word(RegWord::PC), 0x222);
+        assert_eq!(registers.read_word(&RegWord::SP), 0x111);
+        assert_eq!(registers.read_word(&RegWord::PC), 0x222);
     }
 
     #[test]
     fn write_word_registers() {
         let mut registers = Registers::new();
 
-        registers.write_word(RegWord::AF, 0x120);
-        registers.write_word(RegWord::BC, 0x304);
-        registers.write_word(RegWord::DE, 0x506);
-        registers.write_word(RegWord::HL, 0x708);
+        registers.write_word(&RegWord::AF, 0x120);
+        registers.write_word(&RegWord::BC, 0x304);
+        registers.write_word(&RegWord::DE, 0x506);
+        registers.write_word(&RegWord::HL, 0x708);
 
         assert_eq!(registers.a, 0x1);
         assert_eq!(registers.f, 0x20);
@@ -243,8 +244,8 @@ mod tests {
         assert_eq!(registers.l, 0x8);
 
         // not much point to these tests
-        registers.write_word(RegWord::SP, 0x111);
-        registers.write_word(RegWord::PC, 0x222);
+        registers.write_word(&RegWord::SP, 0x111);
+        registers.write_word(&RegWord::PC, 0x222);
         registers.sp = 0x111;
         registers.pc = 0x222;
     }
