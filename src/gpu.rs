@@ -17,11 +17,31 @@ const PALETTE_OBJ_1_ADDRESS: u16 = 0xFF49;
 const WINDOW_Y_ADDRESS: u16 = 0xFF4A;
 const WINDOW_X_ADDRESS: u16 = 0xFF4B;
 
+pub enum LcdControlFlag {
+    Enable = 0b1000_0000,
+    WindowTileMap = 0b0100_0000,
+    WindowEnable = 0b0010_0000,
+    BgAndWindowTileAreaData = 0b0001_0000,
+    BgTileMapArea = 0b0000_1000,
+    ObjectSize = 0b0000_0100,
+    ObjectEnable = 0b0000_0010,
+    BgAndWindowEnable = 0b0000_0001,
+}
+
+pub enum LcdStatusFlag {
+    LycInterruptEnable = 0b0100_0000,
+    Mode2InterruptEnable = 0b0010_0000,
+    Mode1InterruptEnable = 0b0001_0000,
+    Mode0InterruptEnable = 0b0000_1000,
+    LycEquality = 0b0000_0100,
+    Mode = 0b0000_0011, // TODO do we want a 2 bit flag?
+}
+
 pub struct Gpu {
     vram: [u8; VRAM_SIZE],
     oam: [u8; OAM_SIZE],
     lcd_control: u8,
-    lcd_stat: u8,
+    lcd_status: u8,
     background_y: u8,
     background_x: u8,
     lcd_y: u8,
@@ -40,7 +60,7 @@ impl Gpu {
             vram: [0; VRAM_SIZE],
             oam: [0; OAM_SIZE],
             lcd_control: 0,
-            lcd_stat: 0,
+            lcd_status: 0,
             background_y: 0,
             background_x: 0,
             lcd_y: 0,
@@ -59,14 +79,14 @@ impl Gpu {
             VRAM_START..=VRAM_END => self.vram[(address - VRAM_START) as usize],
             OAM_START..=OAM_END => self.oam[(address - VRAM_START) as usize],
             LCD_CONTROL_ADDRESS => self.lcd_control,
-            LCD_STAT_ADDRESS => self.lcd_stat,
+            LCD_STAT_ADDRESS => self.lcd_status,
             BACKGROUND_Y_ADDRESS => self.background_y,
             BACKGROUND_X_ADDRESS => self.background_x,
             LCD_Y_ADDRESS => self.lcd_y,
             LCD_Y_COMPARE_ADDRESS => self.lcd_y_compare,
             OAM_DMA_SOURCE_ADDRESS => self.oam_dma_source,
             WINDOW_Y_ADDRESS => self.window_y,
-            WINDOW_X_ADDRESS => self.window_x + 7, // weird that its + 7
+            WINDOW_X_ADDRESS => self.window_x, // TODO +- 7?
             _ => 0xFF
         }
     }
@@ -76,14 +96,14 @@ impl Gpu {
             VRAM_START..=VRAM_END => self.vram[(address - VRAM_START) as usize] = value,
             OAM_START..=OAM_END => self.oam[(address - VRAM_START) as usize] = value,
             LCD_CONTROL_ADDRESS => self.lcd_control = value,
-            LCD_STAT_ADDRESS => self.lcd_stat = value,
+            LCD_STAT_ADDRESS => self.lcd_status = value,
             BACKGROUND_Y_ADDRESS => self.background_y = value,
             BACKGROUND_X_ADDRESS => self.background_x = value,
             LCD_Y_ADDRESS => self.lcd_y = value,
             LCD_Y_COMPARE_ADDRESS => self.lcd_y_compare = value,
             OAM_DMA_SOURCE_ADDRESS => self.oam_dma_source = value,
             WINDOW_Y_ADDRESS => self.window_y = value,
-            WINDOW_X_ADDRESS => self.window_x = value.saturating_sub(7), // weird that its - 7
+            WINDOW_X_ADDRESS => self.window_x = value, // TODO +- 7?
             _ => {
                 println!("Unhandled write to {} with {}", address, value);
             },
@@ -103,15 +123,4 @@ impl Gpu {
             self.lcd_control = self.lcd_control & mask;
         }
     }
-}
-
-pub enum LcdControlFlag {
-    Enable = 0b1000_0000,
-    WindowTileMap = 0b0100_0000,
-    WindowEnable = 0b0010_0000,
-    BgAndWindowTileAreaData = 0b0001_0000,
-    BgTileMapArea = 0b0000_1000,
-    ObjectSize = 0b0000_0100,
-    ObjectEnable = 0b0000_0010,
-    BgAndWindowEnable = 0b0000_0001,
 }
