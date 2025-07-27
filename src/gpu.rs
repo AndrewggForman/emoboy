@@ -5,7 +5,7 @@ const OAM_START: u16 = 0xFE00;
 const OAM_END: u16 = 0xFE9F;
 const OAM_SIZE: usize = ((OAM_END - OAM_START) + 1) as usize;
 const LCD_CONTROL_ADDRESS: u16 = 0xFF40;
-const LCD_STAT_ADDRESS: u16 = 0xFF41;
+const LCD_STATUS_ADDRESS: u16 = 0xFF41;
 const BACKGROUND_Y_ADDRESS: u16 = 0xFF42;
 const BACKGROUND_X_ADDRESS: u16 = 0xFF43;
 const LCD_Y_ADDRESS: u16 = 0xFF44;
@@ -17,31 +17,11 @@ const PALETTE_OBJ_1_ADDRESS: u16 = 0xFF49;
 const WINDOW_Y_ADDRESS: u16 = 0xFF4A;
 const WINDOW_X_ADDRESS: u16 = 0xFF4B;
 
-pub enum LcdControlFlag {
-    Enable = 0b1000_0000,
-    WindowTileMap = 0b0100_0000,
-    WindowEnable = 0b0010_0000,
-    BgAndWindowTileAreaData = 0b0001_0000,
-    BgTileMapArea = 0b0000_1000,
-    ObjectSize = 0b0000_0100,
-    ObjectEnable = 0b0000_0010,
-    BgAndWindowEnable = 0b0000_0001,
-}
-
-pub enum LcdStatusFlag {
-    LycInterruptEnable = 0b0100_0000,
-    Mode2InterruptEnable = 0b0010_0000,
-    Mode1InterruptEnable = 0b0001_0000,
-    Mode0InterruptEnable = 0b0000_1000,
-    LycEquality = 0b0000_0100,
-    Mode = 0b0000_0011, // TODO do we want a 2 bit flag?
-}
-
 pub struct Gpu {
     vram: [u8; VRAM_SIZE],
     oam: [u8; OAM_SIZE],
-    lcd_control: u8,
-    lcd_status: u8,
+    lcd_control: LcdControl,
+    lcd_status: LcdStatus,
     background_y: u8,
     background_x: u8,
     lcd_y: u8,
@@ -59,8 +39,8 @@ impl Gpu {
         Self {
             vram: [0; VRAM_SIZE],
             oam: [0; OAM_SIZE],
-            lcd_control: 0,
-            lcd_status: 0,
+            lcd_control: LcdControl::new(),
+            lcd_status: LcdStatus::new(),
             background_y: 0,
             background_x: 0,
             lcd_y: 0,
@@ -78,8 +58,8 @@ impl Gpu {
         match address {
             VRAM_START..=VRAM_END => self.vram[(address - VRAM_START) as usize],
             OAM_START..=OAM_END => self.oam[(address - VRAM_START) as usize],
-            LCD_CONTROL_ADDRESS => self.lcd_control,
-            LCD_STAT_ADDRESS => self.lcd_status,
+            LCD_CONTROL_ADDRESS => self.lcd_control.read_byte(),
+            LCD_STATUS_ADDRESS => self.lcd_status.read_byte(),
             BACKGROUND_Y_ADDRESS => self.background_y,
             BACKGROUND_X_ADDRESS => self.background_x,
             LCD_Y_ADDRESS => self.lcd_y,
@@ -95,8 +75,8 @@ impl Gpu {
         match address {
             VRAM_START..=VRAM_END => self.vram[(address - VRAM_START) as usize] = value,
             OAM_START..=OAM_END => self.oam[(address - VRAM_START) as usize] = value,
-            LCD_CONTROL_ADDRESS => self.lcd_control = value,
-            LCD_STAT_ADDRESS => self.lcd_status = value,
+            LCD_CONTROL_ADDRESS => self.lcd_control.write_byte(value),
+            LCD_STATUS_ADDRESS => self.lcd_status.write_byte(value),
             BACKGROUND_Y_ADDRESS => self.background_y = value,
             BACKGROUND_X_ADDRESS => self.background_x = value,
             LCD_Y_ADDRESS => self.lcd_y = value,
@@ -110,17 +90,119 @@ impl Gpu {
         }
     }
 
-    pub fn read_lcd_control_flag(&self, lcd_control_flag: LcdControlFlag) -> bool {
-        self.lcd_control & (lcd_control_flag as u8) > 0
+    // TODO probably need to add clock cycles
+    pub fn step(&mut self) {
+
+    }
+}
+
+#[derive(Copy, Clone)]
+pub enum Mode {
+    Hblank = 0,
+    Vblank = 1,
+    OamScan = 2,
+    Draw = 3,
+}
+
+pub struct LcdStatus {
+    // coincidence: LYC==LY
+    coincidence_interrupt: bool,
+    oam_scan_interrupt: bool,
+    v_blank_interrupt: bool,
+    h_blank_interrupt: bool,
+    coincidence_flag: bool,
+    mode: Mode,
+}
+
+impl LcdStatus {
+    pub fn new() -> Self {
+        Self {
+            coincidence_interrupt: false,
+            oam_scan_interrupt: false,
+            v_blank_interrupt: false,
+            h_blank_interrupt: false,
+            coincidence_flag: false,
+            mode: Mode::Hblank,
+        }
     }
 
-    pub fn write_lcd_control_flag(&mut self, lcd_control_flag: LcdControlFlag, value: bool) {
-        if value {
-            let mask = lcd_control_flag as u8;
-            self.lcd_control = self.lcd_control | mask;
-        } else {
-            let mask = !(lcd_control_flag as u8);
-            self.lcd_control = self.lcd_control & mask;
+    pub fn read_byte(&self) -> u8 {
+        let mut ret: u8 = 0;
+        if self.coincidence_interrupt { ret = ret | 0b0100_0000 }
+        if self.oam_scan_interrupt    { ret = ret | 0b0010_0000 }
+        if self.v_blank_interrupt     { ret = ret | 0b0001_0000 }
+        if self.h_blank_interrupt     { ret = ret | 0b0000_1000 }
+        if self.coincidence_flag      { ret = ret | 0b0000_0100 }
+
+        ret | (self.mode as u8)
+    }
+
+    pub fn write_byte(&mut self, data: u8) {
+        self.coincidence_interrupt = data & 0b0100_0000 > 0;
+        self.oam_scan_interrupt    = data & 0b0010_0000 > 0;
+        self.v_blank_interrupt     = data & 0b0001_0000 > 0;
+        self.h_blank_interrupt     = data & 0b0000_1000 > 0;
+        self.coincidence_flag      = data & 0b0000_0100 > 0;
+
+        let mode_bits = data & 0b0000_0011;
+        match mode_bits {
+            0 => self.mode = Mode::Hblank,
+            1 => self.mode = Mode::Vblank,
+            2 => self.mode = Mode::OamScan,
+            3 => self.mode = Mode::Draw,
+            _ => panic!("Unexpected LcdStatus Mode")
         }
+    }
+}
+
+pub struct LcdControl {
+    enabled: bool,
+    window_tile_map: bool,
+    window_enabled: bool,
+    tile_data_select: bool,
+    background_tile_map_select: bool,
+    large_sprite_size_enabled: bool,
+    sprites_enabled: bool,
+    background_and_window_enabled: bool,
+}
+
+impl LcdControl {
+    pub fn new() -> Self {
+        Self {
+            enabled: false,
+            window_tile_map: false,
+            window_enabled: false,
+            tile_data_select: false,
+            background_tile_map_select: false,
+            large_sprite_size_enabled: false,
+            sprites_enabled: false,
+            background_and_window_enabled: false,
+        }
+    }
+
+    pub fn read_byte(&self) -> u8 {
+        let mut control_byte: u8 = 0;
+
+        if self.enabled                       { control_byte |= 0b1000_0000 }
+        if self.window_tile_map               { control_byte |= 0b0100_0000 }
+        if self.window_enabled                { control_byte |= 0b0010_0000 }
+        if self.tile_data_select              { control_byte |= 0b0001_0000 }
+        if self.background_tile_map_select    { control_byte |= 0b0000_1000 }
+        if self.large_sprite_size_enabled     { control_byte |= 0b0000_0100 }
+        if self.sprites_enabled               { control_byte |= 0b0000_0010 }
+        if self.background_and_window_enabled { control_byte |= 0b0000_0001 }
+
+        control_byte
+    }
+
+    pub fn write_byte(&mut self, data: u8) {
+        self.enabled                       = data & 0b1000_0000 > 0;
+        self.window_tile_map               = data & 0b0100_0000 > 0;
+        self.window_enabled                = data & 0b0010_0000 > 0;
+        self.tile_data_select              = data & 0b0001_0000 > 0;
+        self.background_tile_map_select    = data & 0b0000_1000 > 0;
+        self.large_sprite_size_enabled     = data & 0b0000_0100 > 0;
+        self.sprites_enabled               = data & 0b0000_0010 > 0;
+        self.background_and_window_enabled = data & 0b0000_0001 > 0;
     }
 }
