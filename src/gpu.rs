@@ -17,6 +17,14 @@ const PALETTE_OBJ_1_ADDRESS: u16 = 0xFF49;
 const WINDOW_Y_ADDRESS: u16 = 0xFF4A;
 const WINDOW_X_ADDRESS: u16 = 0xFF4B;
 
+const NUM_CYCLES_OAM: u16 = 80;
+const NUM_CYCLES_DRAW: u16 = 172;
+const NUM_CYCLES_HBLANK: u16 = 204;
+const NUM_CYCLES_VBLANK: u16 = 456;
+
+const NUM_VISIBLE_SCANLINES: u8 = 143;
+const MAX_SCANLINES: u8 = 153;
+
 pub struct Gpu {
     vram: [u8; VRAM_SIZE],
     oam: [u8; OAM_SIZE],
@@ -32,6 +40,8 @@ pub struct Gpu {
     palette_obj_1: u8,
     window_y: u8,
     window_x: u8,
+
+    clock: u16,
 }
 
 impl Gpu {
@@ -51,6 +61,8 @@ impl Gpu {
             palette_obj_1: 0,
             window_y: 0,
             window_x: 0,
+
+            clock: 0,
         }
     }
 
@@ -90,9 +102,71 @@ impl Gpu {
         }
     }
 
-    // TODO probably need to add clock cycles
-    pub fn step(&mut self) {
+    // TODO need to chat with andao about how we want to manage cycles and how close to reality we want timing to be
+    pub fn step(&mut self, num_cycles: u8) {
+        if !self.lcd_control.enabled {
+            return;
+        }
 
+        // clock will tick up but gets reset during every mode switch
+        self.clock += num_cycles as u16;
+
+        match self.lcd_status.mode {
+            Mode::Oam => {
+                if self.clock >= NUM_CYCLES_OAM {
+                    self.lcd_status.mode = Mode::Draw;
+                    self.clock = self.clock % NUM_CYCLES_OAM;
+                }
+            }
+            Mode::Draw => {
+                if self.clock >= NUM_CYCLES_DRAW {
+                    // draw scanline
+                    self.lcd_status.mode = Mode::Hblank;
+                    self.clock = self.clock % NUM_CYCLES_DRAW;
+                }
+            }
+            Mode::Hblank => {
+                if self.clock >= NUM_CYCLES_HBLANK {
+                    if self.lcd_y >= NUM_VISIBLE_SCANLINES {
+                        self.lcd_status.mode = Mode::Vblank;
+                    } else {
+                        self.set_lcd_y(self.lcd_y + 1);
+                        self.lcd_status.mode = Mode::Oam;
+                    }
+
+                    self.clock = self.clock % NUM_CYCLES_HBLANK;
+                }
+            }
+            Mode::Vblank => {
+                if self.clock >= NUM_CYCLES_VBLANK {
+                    self.set_lcd_y(self.lcd_y + 1);
+                    self.clock = self.clock % NUM_CYCLES_VBLANK;
+                    
+                    if self.lcd_y >= MAX_SCANLINES {
+                        self.lcd_status.mode = Mode::Oam;
+                        self.set_lcd_y(0);
+                    }
+                }
+            }
+        }
+    }
+
+    fn set_lcd_y(&mut self, value: u8) {
+        self.lcd_y = value;
+        self.compare_y_y_compare();
+    }
+
+    fn set_lcd_y_compare(&mut self, value: u8) {
+        self.lcd_y_compare = value;
+        self.compare_y_y_compare();
+    }
+
+    fn compare_y_y_compare(&mut self) {
+        let is_equal = self.lcd_y == self.lcd_y_compare;
+        self.lcd_status.coincidence_flag = is_equal;
+        if is_equal {
+            // TODO if enabled a STAT interrupt is requested
+        }
     }
 }
 
@@ -100,7 +174,7 @@ impl Gpu {
 pub enum Mode {
     Hblank = 0,
     Vblank = 1,
-    OamScan = 2,
+    Oam = 2,
     Draw = 3,
 }
 
@@ -148,7 +222,7 @@ impl LcdStatus {
         match mode_bits {
             0 => self.mode = Mode::Hblank,
             1 => self.mode = Mode::Vblank,
-            2 => self.mode = Mode::OamScan,
+            2 => self.mode = Mode::Oam,
             3 => self.mode = Mode::Draw,
             _ => panic!("Unexpected LcdStatus Mode")
         }
