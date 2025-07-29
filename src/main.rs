@@ -17,5 +17,5 @@ fn main() {
     let mut cpu = Cpu::new();
 
     // TODO this feels wrong, why does cpu load a rom. might need to add a motherboard/device type struct eventually
-    cpu.load_rom_file("assets/dmg_boot.bin");
+    cpu.load_rom_file("assets/andy_test_rom.bin");
 }

@@ -24,11 +24,25 @@ pub enum OpCode {
     DEC_E = 0x1D,
     DEC_H = 0x25,
     DEC_L = 0x2D,
-    DEC_HL = 0x35,
+    DEC_HL_MEM = 0x35,
     DEC_A = 0x3D,
+
+    DEC_BC = 0x0B,
+    DEC_DE = 0x1B,
+    DEC_HL = 0x2B,
+    DEC_SP = 0x3B,
 
     RLCA = 0x07,
     RLA = 0x17,
+    RRCA = 0x0F,
+    RRA = 0x1F,
+    //DAA = 0x27, TODO
+    SCF = 0x37,
+
+    // TODO: IMPLEMENT THESE: need to fetch next bit
+    JR_S8 = 0x18,
+    JRZ_S8 = 0x28,
+    JRC_s8 = 0x38,
 
     ADD_HL_BC = 0x09,
     ADD_HL_DE = 0x19,
@@ -44,6 +58,11 @@ pub enum OpCode {
     LD_DE_A = 0x12,
     LD_HLI_A = 0x22,
     LD_HLD_A = 0x32,
+
+    LD_A_BC = 0x0A,
+    LD_A_DE = 0x1A,
+    LD_A_HLI = 0x2A,
+    LD_A_HLD = 0x3A,
 
     LD_B_B = 0x40,
     LD_B_C = 0x41,
@@ -193,64 +212,22 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
     match code {
         // Increment Register
         OpCode::INC_B => {
-            let value = cpu.registers.read_byte(&RegByte::B);
-            let (result, zero, half_carry) = increment_8bit(value);
-            cpu.registers.write_flag(RegFlag::Zero, zero);
-            cpu.registers.write_flag(RegFlag::HalfCarry, half_carry);
-            cpu.registers.write_flag(RegFlag::Subtraction, false);
-            cpu.registers.write_byte(&RegByte::B, result);
-
-            cpu.clock.cycle_clock(1);
+            increment_8bit_register(cpu, &RegByte::B);
         }
         OpCode::INC_C => {
-            let value = cpu.registers.read_byte(&RegByte::C);
-            let (result, zero, half_carry) = increment_8bit(value);
-            cpu.registers.write_flag(RegFlag::Zero, zero);
-            cpu.registers.write_flag(RegFlag::HalfCarry, half_carry);
-            cpu.registers.write_flag(RegFlag::Subtraction, false);
-            cpu.registers.write_byte(&RegByte::C, result);
-
-            cpu.clock.cycle_clock(1);
+            increment_8bit_register(cpu, &RegByte::C);
         }
         OpCode::INC_D => {
-            let value = cpu.registers.read_byte(&RegByte::D);
-            let (result, zero, half_carry) = increment_8bit(value);
-            cpu.registers.write_flag(RegFlag::Zero, zero);
-            cpu.registers.write_flag(RegFlag::HalfCarry, half_carry);
-            cpu.registers.write_flag(RegFlag::Subtraction, false);
-            cpu.registers.write_byte(&RegByte::D, result);
-
-            cpu.clock.cycle_clock(1);
+            increment_8bit_register(cpu, &RegByte::D);
         }
         OpCode::INC_E => {
-            let value = cpu.registers.read_byte(&RegByte::E);
-            let (result, zero, half_carry) = increment_8bit(value);
-            cpu.registers.write_flag(RegFlag::Zero, zero);
-            cpu.registers.write_flag(RegFlag::HalfCarry, half_carry);
-            cpu.registers.write_flag(RegFlag::Subtraction, false);
-            cpu.registers.write_byte(&RegByte::E, result);
-
-            cpu.clock.cycle_clock(1);
+            increment_8bit_register(cpu, &RegByte::E);
         }
         OpCode::INC_H => {
-            let value = cpu.registers.read_byte(&RegByte::H);
-            let (result, zero, half_carry) = increment_8bit(value);
-            cpu.registers.write_flag(RegFlag::Zero, zero);
-            cpu.registers.write_flag(RegFlag::HalfCarry, half_carry);
-            cpu.registers.write_flag(RegFlag::Subtraction, false);
-            cpu.registers.write_byte(&RegByte::H, result);
-
-            cpu.clock.cycle_clock(1);
+            increment_8bit_register(cpu, &RegByte::H);
         }
         OpCode::INC_L => {
-            let value = cpu.registers.read_byte(&RegByte::L);
-            let (result, zero, half_carry) = increment_8bit(value);
-            cpu.registers.write_flag(RegFlag::Zero, zero);
-            cpu.registers.write_flag(RegFlag::HalfCarry, half_carry);
-            cpu.registers.write_flag(RegFlag::Subtraction, false);
-            cpu.registers.write_byte(&RegByte::L, result);
-
-            cpu.clock.cycle_clock(1);
+            increment_8bit_register(cpu, &RegByte::L);
         }
         OpCode::INC_HL => {
             let address = cpu.registers.read_word(&RegWord::HL);
@@ -264,56 +241,21 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
             cpu.clock.cycle_clock(3);
         }
         OpCode::INC_A => {
-            let value = cpu.registers.read_byte(&RegByte::A);
-            let (result, zero, half_carry) = increment_8bit(value);
-            cpu.registers.write_flag(RegFlag::Zero, zero);
-            cpu.registers.write_flag(RegFlag::HalfCarry, half_carry);
-            cpu.registers.write_flag(RegFlag::Subtraction, false);
-            cpu.registers.write_byte(&RegByte::A, result);
-
-            cpu.clock.cycle_clock(1);
+            increment_8bit_register(cpu, &RegByte::A);
         }
 
         // Decrement 8 bit value
         OpCode::DEC_B => {
-            let value = cpu.registers.read_byte(&RegByte::B);
-            let (result, zero, half_borrow) = decrement_8bit(value);
-            cpu.registers.write_flag(RegFlag::Zero, zero);
-            cpu.registers.write_flag(RegFlag::HalfCarry, half_borrow);
-            cpu.registers.write_flag(RegFlag::Subtraction, true);
-            cpu.registers.write_byte(&RegByte::B, result);
-
-            cpu.clock.cycle_clock(1);
+            decrement_8bit_register(cpu, &RegByte::B);
         }
         OpCode::DEC_C => {
-            let value = cpu.registers.read_byte(&RegByte::C);
-            let (result, zero, half_borrow) = decrement_8bit(value);
-            cpu.registers.write_flag(RegFlag::Zero, zero);
-            cpu.registers.write_flag(RegFlag::HalfCarry, half_borrow);
-            cpu.registers.write_flag(RegFlag::Subtraction, true);
-            cpu.registers.write_byte(&RegByte::C, result);
-
-            cpu.clock.cycle_clock(1);
+            decrement_8bit_register(cpu, &RegByte::C);
         }
         OpCode::DEC_D => {
-            let value = cpu.registers.read_byte(&RegByte::D);
-            let (result, zero, half_borrow) = decrement_8bit(value);
-            cpu.registers.write_flag(RegFlag::Zero, zero);
-            cpu.registers.write_flag(RegFlag::HalfCarry, half_borrow);
-            cpu.registers.write_flag(RegFlag::Subtraction, true);
-            cpu.registers.write_byte(&RegByte::D, result);
-
-            cpu.clock.cycle_clock(1);
+            decrement_8bit_register(cpu, &RegByte::D);
         }
         OpCode::DEC_E => {
-            let value = cpu.registers.read_byte(&RegByte::E);
-            let (result, zero, half_borrow) = decrement_8bit(value);
-            cpu.registers.write_flag(RegFlag::Zero, zero);
-            cpu.registers.write_flag(RegFlag::HalfCarry, half_borrow);
-            cpu.registers.write_flag(RegFlag::Subtraction, true);
-            cpu.registers.write_byte(&RegByte::E, result);
-
-            cpu.clock.cycle_clock(1);
+            decrement_8bit_register(cpu, &RegByte::E);
         }
         OpCode::DEC_H => {
             let value = cpu.registers.read_byte(&RegByte::H);
@@ -326,16 +268,9 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
             cpu.clock.cycle_clock(1);
         }
         OpCode::DEC_L => {
-            let value = cpu.registers.read_byte(&RegByte::L);
-            let (result, zero, half_borrow) = decrement_8bit(value);
-            cpu.registers.write_flag(RegFlag::Zero, zero);
-            cpu.registers.write_flag(RegFlag::HalfCarry, half_borrow);
-            cpu.registers.write_flag(RegFlag::Subtraction, true);
-            cpu.registers.write_byte(&RegByte::L, result);
-
-            cpu.clock.cycle_clock(1);
+            decrement_8bit_register(cpu, &RegByte::L);
         }
-        OpCode::DEC_HL => {
+        OpCode::DEC_HL_MEM => {
             let address = cpu.registers.read_word(&RegWord::HL);
             let value = cpu.memory.read_byte(address);
             let (result, zero, half_borrow) = decrement_8bit(value);
@@ -347,38 +282,65 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
             cpu.clock.cycle_clock(3);
         }
         OpCode::DEC_A => {
-            let value = cpu.registers.read_byte(&RegByte::A);
-            let (result, zero, half_borrow) = decrement_8bit(value);
-            cpu.registers.write_flag(RegFlag::Zero, zero);
-            cpu.registers.write_flag(RegFlag::HalfCarry, half_borrow);
-            cpu.registers.write_flag(RegFlag::Subtraction, true);
-            cpu.registers.write_byte(&RegByte::A, result);
+            decrement_8bit_register(cpu, &RegByte::A);
+        }
 
-            cpu.clock.cycle_clock(1);
+        // Decrement virtual_registers_contents
+        OpCode::DEC_BC => {
+            let value = cpu.registers.read_word(&RegWord::BC);
+            cpu.registers
+                .write_word(&RegWord::BC, value.wrapping_sub(1));
+
+            cpu.clock.cycle_clock(2);
+        }
+        OpCode::DEC_DE => {
+            let value = cpu.registers.read_word(&RegWord::DE);
+            cpu.registers
+                .write_word(&RegWord::DE, value.wrapping_sub(1));
+
+            cpu.clock.cycle_clock(2);
+        }
+        OpCode::DEC_HL => {
+            let value = cpu.registers.read_word(&RegWord::HL);
+            cpu.registers
+                .write_word(&RegWord::HL, value.wrapping_sub(1));
+
+            cpu.clock.cycle_clock(2);
+        }
+        OpCode::DEC_SP => {
+            let value = cpu.registers.read_word(&RegWord::SP);
+            cpu.registers
+                .write_word(&RegWord::SP, value.wrapping_sub(1));
+
+            cpu.clock.cycle_clock(2);
         }
 
         // Increment virtual registers contents
         OpCode::INC_BC => {
             let value = cpu.registers.read_word(&RegWord::BC);
-            cpu.registers.write_word(&RegWord::BC, value + 1);
+            cpu.registers
+                .write_word(&RegWord::BC, value.wrapping_add(1));
 
             cpu.clock.cycle_clock(2);
         }
         OpCode::INC_DE => {
             let value = cpu.registers.read_word(&RegWord::DE);
-            cpu.registers.write_word(&RegWord::DE, value + 1);
+            cpu.registers
+                .write_word(&RegWord::DE, value.wrapping_add(1));
 
             cpu.clock.cycle_clock(2);
         }
         OpCode::INC_HL_REG => {
             let value = cpu.registers.read_word(&RegWord::HL);
-            cpu.registers.write_word(&RegWord::HL, value + 1);
+            cpu.registers
+                .write_word(&RegWord::HL, value.wrapping_add(1));
 
             cpu.clock.cycle_clock(2);
         }
         OpCode::INC_SP => {
             let value = cpu.registers.read_word(&RegWord::SP);
-            cpu.registers.write_word(&RegWord::SP, value + 1);
+            cpu.registers
+                .write_word(&RegWord::SP, value.wrapping_add(1));
 
             cpu.clock.cycle_clock(2);
         }
@@ -413,36 +375,41 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
             cpu.clock.cycle_clock(3);
         }
 
+        // Load Virtual Registers contents-memory to A
+        OpCode::LD_A_BC => {
+            load_virtual_register_to_a(cpu, &RegWord::BC);
+        }
+        OpCode::LD_A_DE => {
+            load_virtual_register_to_a(cpu, &RegWord::DE);
+        }
+        OpCode::LD_A_HLI => {
+            load_virtual_register_to_a(cpu, &RegWord::HL);
+            cpu.registers
+                .write_word(&RegWord::HL, (cpu.registers.read_word(&RegWord::HL) + 1));
+        }
+        OpCode::LD_A_HLD => {
+            load_virtual_register_to_a(cpu, &RegWord::HL);
+            cpu.registers
+                .write_word(&RegWord::HL, (cpu.registers.read_word(&RegWord::HL) - 1));
+        }
+
         // Store register A's contents inside memory location
-        OpCode::LD_BC_A => {
-            let value = cpu.registers.read_byte(&RegByte::A);
-            let address = cpu.registers.read_word(&RegWord::BC);
-            cpu.memory.write_byte(address, value);
-            cpu.clock.cycle_clock(2);
-        }
-        OpCode::LD_DE_A => {
-            let value = cpu.registers.read_byte(&RegByte::A);
-            let address = cpu.registers.read_word(&RegWord::DE);
-            cpu.memory.write_byte(address, value);
-            cpu.clock.cycle_clock(2);
-        }
+        OpCode::LD_BC_A => load_a_to_virtual_registers_byte(cpu, &RegWord::BC),
+        OpCode::LD_DE_A => load_a_to_virtual_registers_byte(cpu, &RegWord::DE),
         OpCode::LD_HLI_A => {
-            let value = cpu.registers.read_byte(&RegByte::A);
-            let address = cpu.registers.read_word(&RegWord::HL);
-            cpu.memory.write_byte(address, value);
-            cpu.registers.write_word(&RegWord::HL, address + 1);
-            cpu.clock.cycle_clock(2);
+            load_a_to_virtual_registers_byte(cpu, &RegWord::HL);
+            cpu.registers
+                .write_word(&RegWord::HL, (1 + cpu.registers.read_word(&RegWord::HL)));
         }
         OpCode::LD_HLD_A => {
-            let value = cpu.registers.read_byte(&RegByte::A);
-            let address = cpu.registers.read_word(&RegWord::HL);
-            cpu.memory.write_byte(address, value);
-            cpu.registers.write_word(&RegWord::HL, address - 1);
-            cpu.clock.cycle_clock(2);
+            load_a_to_virtual_registers_byte(cpu, &RegWord::HL);
+            cpu.registers
+                .write_word(&RegWord::HL, (cpu.registers.read_word(&RegWord::HL) - 1));
         }
 
         // Rotate contents of A register
         OpCode::RLCA => {
+            // TODO test this
             let word = cpu.registers.read_byte(&RegByte::A);
             let bit_7: u8 = 0x80 & word;
             let mut word_shifted = word << 1;
@@ -458,17 +425,21 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
             cpu.clock.cycle_clock(1);
         }
         OpCode::RLA => {
+            // TODO test this
             let word = cpu.registers.read_byte(&RegByte::A);
             let bit_7: u8 = 0x80 & word;
             let word_shifted = word << 1;
             let carry_value: u8;
+            let mask;
             if (cpu.registers.read_flag(RegFlag::Carry)) {
                 carry_value = 1;
+                mask = 0x01;
             } else {
-                carry_value = 0
+                carry_value = 0;
+                mask = 0x00;
             }
             // Set bit0 to carry_value
-            let word_shifted = (word_shifted & !0x01) | (carry_value & 0x01);
+            let word_shifted = word_shifted | mask;
 
             cpu.registers.write_flag(RegFlag::Carry, bit_7 == 0x80);
             cpu.registers.write_flag(RegFlag::HalfCarry, false);
@@ -477,6 +448,54 @@ pub fn execute_opcode(cpu: &mut cpu::Cpu, code: OpCode) {
             cpu.registers.write_byte(&RegByte::A, word_shifted);
 
             cpu.clock.cycle_clock(1);
+        }
+        OpCode::RRCA => {
+            // TODO test this
+            let word = cpu.registers.read_byte(&RegByte::A);
+            let bit_0: u8 = 0x01 & word;
+            let mut word_shifted = word >> 1;
+            if (bit_0 == 0x01) {
+                word_shifted = word_shifted | 0x80
+            }
+            cpu.registers.write_flag(RegFlag::Carry, bit_0 == 0x01);
+            cpu.registers.write_flag(RegFlag::HalfCarry, false);
+            cpu.registers.write_flag(RegFlag::Subtraction, false);
+            cpu.registers.write_flag(RegFlag::Zero, false);
+            cpu.registers.write_byte(&RegByte::A, word_shifted);
+
+            cpu.clock.cycle_clock(1);
+        }
+        OpCode::RRA => {
+            // TODO test this
+            let word = cpu.registers.read_byte(&RegByte::A);
+            let bit_0: u8 = 0x01 & word;
+            let word_shifted = word >> 1;
+            let carry_value: u8;
+            let mask;
+            if (cpu.registers.read_flag(RegFlag::Carry)) {
+                carry_value = 1;
+                mask = 0x80;
+            } else {
+                carry_value = 0;
+                mask = 0x00;
+            }
+            // Set bit7 to carry_value
+            let word_shifted = word_shifted | mask;
+
+            cpu.registers.write_flag(RegFlag::Carry, bit_0 == 0x01);
+            cpu.registers.write_flag(RegFlag::HalfCarry, false);
+            cpu.registers.write_flag(RegFlag::Subtraction, false);
+            cpu.registers.write_flag(RegFlag::Zero, false);
+            cpu.registers.write_byte(&RegByte::A, word_shifted);
+
+            cpu.clock.cycle_clock(1);
+        }
+
+        // Set Carry Flag (and halfcarry/subtraction)
+        OpCode::SCF => {
+            cpu.registers.write_flag(RegFlag::Subtraction, false);
+            cpu.registers.write_flag(RegFlag::HalfCarry, false);
+            cpu.registers.write_flag(RegFlag::Carry, true);
         }
 
         // Add 16-bit register to HL
@@ -998,6 +1017,26 @@ pub fn fetch_byte() -> u8 {
     13
 }
 
+pub fn increment_8bit_register(cpu: &mut cpu::Cpu, register: &RegByte) {
+    let value = cpu.registers.read_byte(register);
+    let (result, zero, half_carry) = increment_8bit(value);
+    cpu.registers.write_flag(RegFlag::Zero, zero);
+    cpu.registers.write_flag(RegFlag::HalfCarry, half_carry);
+    cpu.registers.write_flag(RegFlag::Subtraction, false);
+    cpu.registers.write_byte(register, result);
+}
+
+pub fn decrement_8bit_register(cpu: &mut cpu::Cpu, register: &RegByte) {
+    let value = cpu.registers.read_byte(register);
+    let (result, zero, half_borrow) = decrement_8bit(value);
+    cpu.registers.write_flag(RegFlag::Zero, zero);
+    cpu.registers.write_flag(RegFlag::HalfCarry, half_borrow);
+    cpu.registers.write_flag(RegFlag::Subtraction, true);
+    cpu.registers.write_byte(register, result);
+
+    cpu.clock.cycle_clock(1);
+}
+
 pub fn add_contents_virtual_register_to_virtual_register(
     cpu: &mut cpu::Cpu,
     receiver: &RegWord,
@@ -1014,6 +1053,18 @@ pub fn add_contents_virtual_register_to_virtual_register(
 
     cpu.registers.write_word(receiver, result);
 
+    cpu.clock.cycle_clock(2);
+}
+
+pub fn load_virtual_register_to_a(cpu: &mut cpu::Cpu, register: &RegWord) {
+    let value = cpu.memory.read_byte(cpu.registers.read_word(register));
+    cpu.registers.write_byte(&RegByte::A, value);
+}
+
+pub fn load_a_to_virtual_registers_byte(cpu: &mut cpu::Cpu, v_register: &RegWord) {
+    let value = cpu.registers.read_byte(&RegByte::A);
+    let address = cpu.registers.read_word(v_register);
+    cpu.memory.write_byte(address, value);
     cpu.clock.cycle_clock(2);
 }
 
@@ -1042,7 +1093,7 @@ pub fn decrement_8bit(value: u8) -> (u8, bool, bool) {
     let zero = result == 0;
 
     // check if we would have to borrow from the 5th bit
-    let is_half_borrow = (value & 0xF) < (value & 0xF);
+    let is_half_borrow = (value & 0xF) < (1 & 0xF);
 
     (result, zero, is_half_borrow)
 }
@@ -1701,6 +1752,67 @@ mod tests {
         assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
     }
 
+    // Increment and Decrement 8bit Registers
+    #[test]
+    fn chain_increment_decrement_8bit_register() {
+        let mut cpu = cpu::Cpu::new();
+
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+
+        cpu.registers.write_byte(&RegByte::A, 255);
+        cpu.registers.write_byte(&RegByte::B, 24);
+        cpu.registers.write_byte(&RegByte::C, 33);
+        cpu.registers.write_byte(&RegByte::D, 1);
+
+        execute_opcode(&mut cpu, OpCode::INC_A);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0);
+
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+
+        execute_opcode(&mut cpu, OpCode::DEC_A);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 255);
+
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+
+        execute_opcode(&mut cpu, OpCode::INC_B);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::B), 25);
+
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+
+        execute_opcode(&mut cpu, OpCode::INC_C);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::C), 34);
+
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+
+        execute_opcode(&mut cpu, OpCode::DEC_D);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::D), 0);
+
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+    }
+
     // Bitwise OR Tests
     #[test]
     fn bitwise_or_of_a_b() {
@@ -1756,6 +1868,195 @@ mod tests {
         assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
     }
 
+    // Rotate A-Register left using RLCA or RLA
+    #[test]
+    fn rotate_register_a_left_producing_carry() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_byte(&RegByte::A, 0b10101010);
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b10101010);
+
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+
+        execute_opcode(&mut cpu, OpCode::RLCA);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b01010101);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+    }
+
+    #[test]
+    fn rotate_register_a_left_without_carry() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_byte(&RegByte::A, 0b0010_1010);
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b0010_1010);
+
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+
+        execute_opcode(&mut cpu, OpCode::RLCA);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b0101_0100);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    #[test]
+    fn rotate_register_a_left_through_carry_without_carry() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_byte(&RegByte::A, 0b1111_1111);
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b1111_1111);
+
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+
+        execute_opcode(&mut cpu, OpCode::RLA);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b1111_1110);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+    }
+
+    #[test]
+    fn rotate_register_a_left_through_carry_with_carry() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_byte(&RegByte::A, 0b0000_1111);
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b0000_1111);
+
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        cpu.registers.write_flag(RegFlag::Carry, true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+
+        execute_opcode(&mut cpu, OpCode::RLA);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b0001_1111);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+
+        execute_opcode(&mut cpu, OpCode::RLA);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b0011_1110);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    // Rotate Right A-register
+    #[test]
+    fn rotate_register_a_right_through_carry_without_carry() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_byte(&RegByte::A, 0b1111_1111);
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b1111_1111);
+
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+
+        execute_opcode(&mut cpu, OpCode::RRA);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b0111_1111);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+    }
+
+    #[test]
+    fn rotate_register_a_right_without_carry() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_byte(&RegByte::A, 0b0111_1110);
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b0111_1110);
+
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        cpu.registers.write_flag(RegFlag::Carry, true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+
+        execute_opcode(&mut cpu, OpCode::RRCA);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b0011_1111);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    #[test]
+    fn rotate_register_right_with_carry() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_byte(&RegByte::A, 0b0111_1101);
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b0111_1101);
+
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+
+        execute_opcode(&mut cpu, OpCode::RRCA);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b1011_1110);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+    }
+
+    #[test]
+    fn rotate_register_a_right_through_carry_with_carry() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_byte(&RegByte::A, 0b0000_1111);
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b0000_1111);
+
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        cpu.registers.write_flag(RegFlag::Carry, true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+
+        execute_opcode(&mut cpu, OpCode::RRA);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b1000_0111);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+
+        execute_opcode(&mut cpu, OpCode::RRA);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b1100_0011);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+    }
+
     // Build 16-bit word out of 2 8-bit words
     #[test]
     fn build_2_byte_word_from_scratch() {
@@ -1765,6 +2066,48 @@ mod tests {
 
         assert_eq!(new_word, 0b1110000101101011);
         assert_eq!(new_word, 57707);
+    }
+
+    // Load Virtual Registers to A
+    #[test]
+    fn chain_load_virtual_registers_to_a() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_flag(RegFlag::Zero, true);
+        cpu.registers.write_flag(RegFlag::Subtraction, true);
+        cpu.registers.write_flag(RegFlag::HalfCarry, true);
+        cpu.registers.write_flag(RegFlag::Carry, true);
+
+        cpu.registers.write_word(&RegWord::HL, 9000);
+        cpu.memory
+            .write_byte(cpu.registers.read_word(&RegWord::HL), 49);
+        cpu.memory.write_byte(8999, 200);
+        cpu.registers.write_byte(&RegByte::A, 10);
+
+        execute_opcode(&mut cpu, OpCode::LD_A_HLD);
+
+        assert_eq!(cpu.registers.read_word(&RegWord::HL), 8999);
+        assert_eq!(cpu.memory.read_byte(9000), 49);
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 49);
+
+        execute_opcode(&mut cpu, OpCode::LD_A_HLI);
+
+        assert_eq!(cpu.registers.read_word(&RegWord::HL), 9000);
+        assert_eq!(cpu.memory.read_byte(8999), 200);
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 200);
+
+        cpu.registers.write_word(&RegWord::BC, 4000);
+        cpu.memory.write_byte(4000, 1);
+
+        execute_opcode(&mut cpu, OpCode::LD_A_BC);
+
+        assert_eq!(cpu.registers.read_word(&RegWord::BC), 4000);
+        assert_eq!(cpu.registers.read_byte(&RegByte::A), 1);
+
+        cpu.registers.write_flag(RegFlag::Zero, true);
+        cpu.registers.write_flag(RegFlag::Subtraction, true);
+        cpu.registers.write_flag(RegFlag::HalfCarry, true);
+        cpu.registers.write_flag(RegFlag::Carry, true);
     }
 
     // Compare to A tests
@@ -1904,6 +2247,69 @@ mod tests {
 
         assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
         assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+    }
+
+    // Test Decrementing and Incrementing Virtual Registers
+    #[test]
+    fn decrement_sp_below_zero() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_flag(RegFlag::Zero, false);
+        cpu.registers.write_flag(RegFlag::Subtraction, true);
+        cpu.registers.write_flag(RegFlag::HalfCarry, true);
+        cpu.registers.write_flag(RegFlag::Carry, true);
+
+        cpu.registers
+            .write_word(&RegWord::SP, 0b0000_0000_0000_0001);
+
+        execute_opcode(&mut cpu, OpCode::DEC_SP);
+
+        assert_eq!(cpu.registers.read_word(&RegWord::SP), 0b0000_0000_0000_0000);
+
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+
+        execute_opcode(&mut cpu, OpCode::DEC_SP);
+
+        assert_eq!(cpu.registers.read_word(&RegWord::SP), 0b1111_1111_1111_1111);
+
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+    }
+
+    #[test]
+    fn increment_bc_and_overflow() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_flag(RegFlag::Zero, false);
+        cpu.registers.write_flag(RegFlag::Subtraction, true);
+        cpu.registers.write_flag(RegFlag::HalfCarry, true);
+        cpu.registers.write_flag(RegFlag::Carry, true);
+
+        cpu.registers
+            .write_word(&RegWord::BC, 0b1111_1111_1111_1110);
+
+        execute_opcode(&mut cpu, OpCode::INC_BC);
+
+        assert_eq!(cpu.registers.read_word(&RegWord::BC), 0b1111_1111_1111_1111);
+
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
+
+        execute_opcode(&mut cpu, OpCode::INC_BC);
+
+        assert_eq!(cpu.registers.read_word(&RegWord::BC), 0b0000_0000_0000_0000);
+
+        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), true);
         assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), true);
         assert_eq!(cpu.registers.read_flag(RegFlag::Carry), true);
     }

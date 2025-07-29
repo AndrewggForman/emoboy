@@ -51,6 +51,9 @@ impl Registers {
             f: 0x00,
             h: 0x00,
             l: 0x00,
+            // TODO: Stack pointer should be set to end of memory (or at least
+            // > near the very end, the stack grows downwards away from the
+            // > end of memory towards the beginning)
             sp: 0x0000,
             pc: 0x0000,
         }
