@@ -5,6 +5,8 @@ use crate::{
     registers::{RegWord, Registers},
 };
 
+// TODO: Remove all mentions of andy test rom OR create new rom
+
 pub struct Cpu {
     pub registers: Registers,
     pub memory: Memory, // TODO-Talk with tint, was memory supposed to be private? I don't know how else to access it in op-codes to do HL commands
@@ -68,9 +70,10 @@ mod tests {
         assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
         assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
 
-        // TODO - fix/figure out opcodes memes.
-        let mut curr_opcode: OpCode = cpu.fetch_next_byte(&cart);
+        // TODO: - fix/figure out opcodes memes.
+        // TODO: FIX
+        //let mut curr_opcode: OpCode = cpu.fetch_next_byte(&cart); SUPER TODO: ???????
 
-        execute_opcode(&mut cpu, curr_opcode);
+        //execute_opcode(&mut cpu, curr_opcode);
     }
 }

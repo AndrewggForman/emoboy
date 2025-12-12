@@ -5,8 +5,11 @@ use crate::registers::{RegByte, Registers};
 mod cartridge;
 mod clock;
 mod cpu;
+mod cpu_logic;
 mod memory;
+mod motherboard;
 mod opcode;
+mod opcode_tests;
 mod registers;
 
 fn main() {

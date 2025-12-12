@@ -1,5 +1,6 @@
 use crate::cartridge::Cartridge;
 
+// TODO: Check if memory banks are off by one (might need to add +1 t0 each of them aside from first? UNSURE)
 const CARTRIDGE_ROM_BANK_0_START: u16 = 0x0000;
 const CARTRIDGE_ROM_BANK_0_END: u16 = 0x3FFF;
 const CARTRIDGE_ROM_BANK_N_START: u16 = 0x4000;
@@ -32,7 +33,7 @@ pub struct Memory {
 impl Memory {
     pub fn new() -> Self {
         Self {
-            _memory: vec![0; 0xFFFF],
+            _memory: vec![0; (0xFFFF + 1)],
             cartridge: Cartridge::new(),
         }
     }
