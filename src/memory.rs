@@ -42,6 +42,7 @@ impl Memory {
         self.cartridge.load_rom_file(file_path);
     }
 
+    // TODO: Look over/talk with tint (does this follow the endianness of the machine?)
     pub fn read_byte(&self, address: u16) -> u8 {
         match address {
             CARTRIDGE_ROM_BANK_0_START..=CARTRIDGE_ROM_BANK_N_END => {
@@ -60,6 +61,7 @@ impl Memory {
         }
     }
 
+    // TODO: Look over/talk with tint (does this follow the endianness of the machine?)
     pub fn write_byte(&mut self, address: u16, value: u8) {
         match address {
             CARTRIDGE_ROM_BANK_0_START..=CARTRIDGE_ROM_BANK_N_END => {

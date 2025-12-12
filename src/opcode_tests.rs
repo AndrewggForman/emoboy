@@ -1,3 +1,4 @@
+// TODO: Import and modify/update all original tests from OpCode to OneByteOpCode (after finishing rest);
 mod tests {
     use crate::{cpu, cpu_logic::*, opcode::*, registers::*};
 

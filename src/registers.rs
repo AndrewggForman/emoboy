@@ -86,6 +86,7 @@ impl Registers {
     }
 
     pub fn read_word(&self, register: &RegWord) -> u16 {
+        // TODO: Talk with tint/figure out -> big endianness system. Do we need to flip these and read in reverse for values?
         match register {
             RegWord::AF => u16::from_be_bytes([self.a, self.f]),
             RegWord::BC => u16::from_be_bytes([self.b, self.c]),
@@ -99,6 +100,7 @@ impl Registers {
     pub fn write_word(&mut self, register: &RegWord, value: u16) {
         let bytes = value.to_be_bytes();
 
+        // TODO: Talk with tint/figure out -> big endianness system. Do we need to flip these and read in reverse for values?
         match register {
             RegWord::AF => {
                 self.a = bytes[0];
