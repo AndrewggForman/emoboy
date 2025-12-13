@@ -152,9 +152,53 @@ impl Registers {
         0
     }
 
+    // TODO: Should maybe swap back to unwrapped adds/subs. I think is correct as is though.
     // Should be called everytime we do something like fetch_byte(),
+
+    pub fn increment_sp(&mut self) {
+        self.sp = self.sp.wrapping_add(1);
+    }
+
     pub fn increment_pc(&mut self) {
-        self.pc += 1;
+        self.pc = self.pc.wrapping_add(1);
+    }
+
+    pub fn decrement_sp(&mut self) {
+        self.sp = self.sp.wrapping_sub(1);
+    }
+
+    pub fn decrement_pc(&mut self) {
+        self.pc = self.pc.wrapping_sub(1);
+    }
+
+    // Register Word Printer for Debug
+    pub fn pretty_print_word(&mut self) {
+        println!(
+            "AF: {}, A: {}, F: {}",
+            u16::from_be_bytes([self.a, self.f]),
+            self.a,
+            self.f
+        );
+        println!(
+            "BC: {}, B: {}, C: {}",
+            u16::from_be_bytes([self.b, self.c]),
+            self.b,
+            self.c
+        );
+        println!(
+            "DE: {}, D: {}, E: {}",
+            u16::from_be_bytes([self.d, self.e]),
+            self.d,
+            self.e
+        );
+        println!(
+            "HL: {}, H: {}, L: {}",
+            u16::from_be_bytes([self.h, self.l]),
+            self.h,
+            self.l
+        );
+        println!("SP: {}, PC: {}", self.sp, self.pc);
+        return;
     }
 }
 
@@ -302,5 +346,20 @@ mod tests {
 
         registers.write_flag(RegFlag::Carry, false);
         assert_eq!(registers.f, 0x0); // 0b0000_0000
+    }
+
+    // Testing pretty printing
+    #[test]
+    fn pretty_print_registers() {
+        let mut registers = Registers::new();
+
+        registers.write_word(&RegWord::AF, 0b0000_0010_0000_1001);
+        registers.write_word(&RegWord::BC, 0b0000_0010_0000_1000);
+        registers.write_word(&RegWord::DE, 0x506);
+        registers.write_word(&RegWord::HL, 0x708);
+
+        registers.pretty_print_word();
+
+        assert_eq!(registers.c, 0b0000_1000); // 0b0000_000
     }
 }

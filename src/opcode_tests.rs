@@ -626,6 +626,8 @@ mod tests {
 
         execute_one_byte_opcode(&mut cpu, OneByteOpCode::LD_BCcontents_A);
 
+        cpu.registers.pretty_print_word();
+
         assert_eq!(cpu.registers.read_byte(&RegByte::A), 0b1000_0001);
         assert_eq!(cpu.registers.read_word(&RegWord::BC), 0b0100_1001_0000_1111);
         assert_eq!(
@@ -882,4 +884,151 @@ mod tests {
         assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
         assert_eq!(cpu.registers.read_flag(RegFlag::Zero), true);
     }
+
+    // Testing Stack related operations
+    #[test]
+    fn pop_top2_off_stack_and_build_new_pc_retnz() {
+        let mut cpu = cpu::Cpu::new();
+
+        // Setup PC
+        cpu.registers.write_word(&RegWord::PC, 0x0010);
+        cpu.memory.write_byte(0x0010, 0x88);
+
+        cpu.memory.write_byte(0xAA21, 0x07);
+
+        // Setup stack
+        cpu.registers.write_word(&RegWord::SP, 0x4000);
+        cpu.registers.decrement_sp();
+        cpu.memory.write_byte(0x3FFF, 0xAA);
+        cpu.registers.decrement_sp();
+        cpu.memory.write_byte(0x3FFE, 0x21);
+
+        execute_one_byte_opcode(&mut cpu, OneByteOpCode::RET_NZ);
+
+        assert_eq!(cpu.registers.read_word(&RegWord::SP), 0x4000);
+        assert_eq!(cpu.registers.read_word(&RegWord::PC), 0xAA21);
+        assert_eq!(
+            cpu.memory.read_byte(cpu.registers.read_word(&RegWord::PC)),
+            0x07
+        );
+    }
+
+    #[test]
+    fn ret_nz_but_z_is_set() {
+        let mut cpu = cpu::Cpu::new();
+
+        cpu.registers.write_flag(RegFlag::Zero, true);
+
+        // Setup PC
+        cpu.registers.write_word(&RegWord::PC, 0x0010);
+        cpu.memory.write_byte(0x0010, 0x88);
+
+        cpu.memory.write_byte(0xAA21, 0x07);
+
+        // Setup stack
+        cpu.registers.write_word(&RegWord::SP, 0x4000);
+        cpu.registers.decrement_sp();
+        cpu.memory.write_byte(0x3FFF, 0xAA);
+        cpu.registers.decrement_sp();
+        cpu.memory.write_byte(0x3FFE, 0x21);
+
+        execute_one_byte_opcode(&mut cpu, OneByteOpCode::RET_NZ);
+
+        assert_eq!(cpu.registers.read_word(&RegWord::SP), 0x3FFE);
+        assert_eq!(cpu.registers.read_word(&RegWord::PC), 0x0010);
+        assert_eq!(
+            cpu.memory.read_byte(cpu.registers.read_word(&RegWord::PC)),
+            0x88
+        );
+        assert_eq!(
+            cpu.memory.read_byte(cpu.registers.read_word(&RegWord::SP)),
+            0x21
+        );
+    }
+
+    #[test]
+    fn ret_nz_testing_stack_boundary() {
+        let mut cpu = cpu::Cpu::new();
+
+        // Setup PC
+        cpu.registers.write_word(&RegWord::PC, 0x0040);
+        cpu.memory.write_byte(0x0040, 0x88);
+        cpu.memory.write_byte(0x8000, 0x12);
+
+        // Setup stack
+        cpu.registers.write_word(&RegWord::SP, 0x0000);
+        cpu.memory.write_byte(0x0000, 0x21);
+        cpu.registers.decrement_sp();
+        cpu.memory.write_byte(0xFFFF, 0x80);
+        cpu.registers.decrement_sp();
+        cpu.memory.write_byte(0xFFFE, 0x00);
+
+        execute_one_byte_opcode(&mut cpu, OneByteOpCode::RET_NZ);
+
+        assert_eq!(cpu.registers.read_word(&RegWord::SP), 0x0000);
+        assert_eq!(cpu.registers.read_word(&RegWord::PC), 0x8000);
+        assert_eq!(
+            cpu.memory.read_byte(cpu.registers.read_word(&RegWord::PC)),
+            0x12
+        );
+        assert_eq!(
+            cpu.memory.read_byte(cpu.registers.read_word(&RegWord::SP)),
+            0x21
+        );
+    }
+
+    #[test]
+    fn pop_bc() {
+        let mut cpu = cpu::Cpu::new();
+
+        // Setup BC
+        cpu.registers.write_word(&RegWord::BC, 0x0040);
+        cpu.memory.write_byte(0x0040, 0x88);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::B), 0x00);
+        assert_eq!(cpu.registers.read_byte(&RegByte::C), 0x40);
+
+        // Setup stack
+        cpu.registers.write_word(&RegWord::SP, 0xFFEA);
+        cpu.memory.write_byte(0xFFEA, 0x21);
+        cpu.registers.decrement_sp();
+        cpu.memory.write_byte(0xFFE9, 0x45);
+        cpu.registers.decrement_sp();
+        cpu.memory.write_byte(0xFFE8, 0xAB);
+
+        execute_one_byte_opcode(&mut cpu, OneByteOpCode::POP_BC);
+
+        assert_eq!(cpu.registers.read_word(&RegWord::SP), 0xFFEA);
+        assert_eq!(cpu.registers.read_word(&RegWord::BC), 0x45AB);
+        assert_eq!(cpu.registers.read_byte(&RegByte::B), 0x45);
+        assert_eq!(cpu.registers.read_byte(&RegByte::C), 0xAB);
+    }
+
+    // TODO: FIX THIS
+    // #[test]
+    // fn push_bc() {
+    //     let mut cpu = cpu::Cpu::new();
+
+    //     // Setup BC
+    //     cpu.registers.write_word(&RegWord::BC, 0x0040);
+    //     cpu.memory.write_byte(0x0040, 0x88);
+
+    //     assert_eq!(cpu.registers.read_byte(&RegByte::B), 0x00);
+    //     assert_eq!(cpu.registers.read_byte(&RegByte::C), 0x40);
+
+    //     // Setup stack
+    //     cpu.registers.write_word(&RegWord::SP, 0xFFEA);
+    //     cpu.memory.write_byte(0xFFEA, 0x21);
+    //     cpu.registers.decrement_sp();
+    //     cpu.memory.write_byte(0xFFE9, 0x45);
+    //     cpu.registers.decrement_sp();
+    //     cpu.memory.write_byte(0xFFE8, 0xAB);
+
+    //     execute_one_byte_opcode(&mut cpu, OneByteOpCode::POP_BC);
+
+    //     assert_eq!(cpu.registers.read_word(&RegWord::SP), 0xFFEA);
+    //     assert_eq!(cpu.registers.read_word(&RegWord::BC), 0x45AB);
+    //     assert_eq!(cpu.registers.read_byte(&RegByte::B), 0x45);
+    //     assert_eq!(cpu.registers.read_byte(&RegByte::C), 0xAB);
+    // }
 }

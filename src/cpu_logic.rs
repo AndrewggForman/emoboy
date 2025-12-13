@@ -6,6 +6,7 @@ use crate::opcode::{OneByteOpCode, ThreeByteOpCode, TwoByteOpCode};
 use crate::registers::{self, RegByte, RegFlag, RegWord};
 
 // TODO: Add OpCodes. Refactor tests/build new ones. Implement clock cycles for each OpCode/fix clock cyles.
+// TODO: Increment Program Counter properly.
 
 pub fn execute_one_byte_opcode(cpu: &mut cpu::Cpu, code: OneByteOpCode) {
     match code {
@@ -995,19 +996,61 @@ pub fn execute_one_byte_opcode(cpu: &mut cpu::Cpu, code: OneByteOpCode) {
         // Notes: Incrementing twice because stack pointer stores pointer to 8 byte segments.
         // Notes: -> Popping increments pointer because as the pointer grows it actually moves to lower addresses
         // TODO: I NEED TO LOOK INTO THIS -> how we store the stack pointer/program counter... and endianness
-        // TODO:
+        // TODO: Make sure this is a conditional return when return if NOT ZERO
         // z/nc/nz etc... info -> https://learn.cemetech.net/index.php?title=Z80:Opcodes:RET
+        // other info -> https://rgbds.gbdev.io/docs/v1.0.0/gbz80.7#RET_cc
         OneByteOpCode::RET_NZ => {
-            let word: u16 = get_word_from_16bit_register(cpu, &RegWord::SP);
-            load_word_to_16bit_register(cpu, word, &RegWord::PC);
-            increment_virtual_register_ignore_flags(cpu, &RegWord::SP);
-            increment_virtual_register_ignore_flags(cpu, &RegWord::SP);
+            if cpu.registers.read_flag(RegFlag::Zero) {
+                cpu.clock.cycle_clock(2);
+                return;
+            }
+
+            let low_word: u16 = get_byte_from_stackpointer_dont_increment(cpu).into();
+            cpu.registers.increment_sp();
+
+            let mut high_word: u16 = get_byte_from_stackpointer_dont_increment(cpu).into();
+            cpu.registers.increment_sp();
+
+            // 0x00FF becomes -> 0xFF00
+            high_word = high_word << 8;
+
+            // 0xFF00 & 0x00AB becomes -> 0xFFAB
+            let full_word = high_word | low_word;
+
+            cpu.registers.write_word(&RegWord::PC, full_word);
 
             cpu.registers.write_flag(RegFlag::Zero, false);
+            cpu.clock.cycle_clock(5);
+        }
+        OneByteOpCode::POP_BC => {
+            let low_byte: u8 = get_byte_from_stackpointer_dont_increment(cpu);
+            cpu.registers.increment_sp();
+
+            let high_byte: u8 = get_byte_from_stackpointer_dont_increment(cpu);
+            cpu.registers.increment_sp();
+
+            cpu.registers.write_byte(&RegByte::B, high_byte);
+            cpu.registers.write_byte(&RegByte::C, low_byte);
+
+            cpu.clock.cycle_clock(3);
+        }
+        OneByteOpCode::PUSH_BC => {
+            cpu.registers.decrement_sp();
+            load_byte_to_virtual_register_target(
+                cpu,
+                cpu.registers.read_byte(&RegByte::B),
+                &RegWord::SP,
+            );
+
+            cpu.registers.decrement_sp();
+            load_byte_to_virtual_register_target(
+                cpu,
+                cpu.registers.read_byte(&RegByte::C),
+                &RegWord::SP,
+            );
+
             cpu.clock.cycle_clock(4);
         }
-        OneByteOpCode::POP_BC => {}
-        OneByteOpCode::PUSH_BC => {}
         OneByteOpCode::RST_00H => {}
         OneByteOpCode::RET_Z => {}
         OneByteOpCode::RET => {}
@@ -1068,6 +1111,10 @@ pub fn get_word_from_16bit_register(cpu: &mut cpu::Cpu, register: &RegWord) -> u
 
 pub fn load_word_to_16bit_register(cpu: &mut cpu::Cpu, word: u16, register: &RegWord) {
     cpu.registers.write_word(register, word);
+}
+
+pub fn get_byte_from_stackpointer_dont_increment(cpu: &mut cpu::Cpu) -> u8 {
+    return cpu.memory.read_byte(cpu.registers.read_word(&RegWord::SP));
 }
 
 // Increment Helper Functions

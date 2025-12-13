@@ -16,9 +16,12 @@ impl Clock {
         }
     }
 
+    // TODO: Look into why I originally thought we couldn't do more than 3 clock cycles
     pub fn cycle_clock(&mut self, cycles: u32) {
-        if cycles < 1 || cycles > 3 {
-            panic!("Cycling clock should only be done in cycles of 1, 2, or 3 machine cycles");
+        if cycles < 1 {
+            panic!(
+                "ERROR::Cycling clock less than one time doesn't make sense! Yoinked by Bear Claw!"
+            );
         }
 
         self.t_cycles += cycles * 4;
