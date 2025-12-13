@@ -1004,31 +1004,35 @@ mod tests {
         assert_eq!(cpu.registers.read_byte(&RegByte::C), 0xAB);
     }
 
-    // TODO: FIX THIS
-    // #[test]
-    // fn push_bc() {
-    //     let mut cpu = cpu::Cpu::new();
+    #[test]
+    fn push_bc() {
+        let mut cpu = cpu::Cpu::new();
 
-    //     // Setup BC
-    //     cpu.registers.write_word(&RegWord::BC, 0x0040);
-    //     cpu.memory.write_byte(0x0040, 0x88);
+        // Setup BC
+        cpu.registers.write_word(&RegWord::BC, 0x2AFF);
 
-    //     assert_eq!(cpu.registers.read_byte(&RegByte::B), 0x00);
-    //     assert_eq!(cpu.registers.read_byte(&RegByte::C), 0x40);
+        assert_eq!(cpu.registers.read_byte(&RegByte::B), 0x2A);
+        assert_eq!(cpu.registers.read_byte(&RegByte::C), 0xFF);
 
-    //     // Setup stack
-    //     cpu.registers.write_word(&RegWord::SP, 0xFFEA);
-    //     cpu.memory.write_byte(0xFFEA, 0x21);
-    //     cpu.registers.decrement_sp();
-    //     cpu.memory.write_byte(0xFFE9, 0x45);
-    //     cpu.registers.decrement_sp();
-    //     cpu.memory.write_byte(0xFFE8, 0xAB);
+        // Setup stack
+        cpu.registers.write_word(&RegWord::SP, 0x1F00);
+        cpu.memory.write_byte(0x1F00, 0x21);
+        cpu.registers.decrement_sp();
+        cpu.memory.write_byte(0x1EFF, 0x45);
+        cpu.registers.decrement_sp();
+        cpu.memory.write_byte(0x1EFE, 0xBB);
 
-    //     execute_one_byte_opcode(&mut cpu, OneByteOpCode::POP_BC);
+        execute_one_byte_opcode(&mut cpu, OneByteOpCode::PUSH_BC);
 
-    //     assert_eq!(cpu.registers.read_word(&RegWord::SP), 0xFFEA);
-    //     assert_eq!(cpu.registers.read_word(&RegWord::BC), 0x45AB);
-    //     assert_eq!(cpu.registers.read_byte(&RegByte::B), 0x45);
-    //     assert_eq!(cpu.registers.read_byte(&RegByte::C), 0xAB);
-    // }
+        assert_eq!(cpu.registers.read_word(&RegWord::SP), 0x1EFC);
+        assert_eq!(cpu.registers.read_word(&RegWord::BC), 0x2AFF);
+        assert_eq!(cpu.registers.read_byte(&RegByte::B), 0x2A);
+        assert_eq!(cpu.registers.read_byte(&RegByte::C), 0xFF);
+
+        assert_eq!(cpu.memory.read_byte(0x1F00), 0x21);
+        assert_eq!(cpu.memory.read_byte(0x1EFF), 0x45);
+        assert_eq!(cpu.memory.read_byte(0x1EFE), 0xBB);
+        assert_eq!(cpu.memory.read_byte(0x1EFD), 0x2A);
+        assert_eq!(cpu.memory.read_byte(0x1EFC), 0xFF);
+    }
 }

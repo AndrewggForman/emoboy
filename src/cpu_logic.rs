@@ -1035,6 +1035,7 @@ pub fn execute_one_byte_opcode(cpu: &mut cpu::Cpu, code: OneByteOpCode) {
             cpu.clock.cycle_clock(3);
         }
         OneByteOpCode::PUSH_BC => {
+            cpu.registers.pretty_print_word();
             cpu.registers.decrement_sp();
             load_byte_to_virtual_register_target(
                 cpu,
@@ -1049,6 +1050,7 @@ pub fn execute_one_byte_opcode(cpu: &mut cpu::Cpu, code: OneByteOpCode) {
                 &RegWord::SP,
             );
 
+            cpu.registers.pretty_print_word();
             cpu.clock.cycle_clock(4);
         }
         OneByteOpCode::RST_00H => {}
