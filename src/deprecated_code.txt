@@ -1,7 +1,0 @@
-        PretyPrint
-            println!(
-                "B: {}, C: {}, BC: {}",
-                cpu.registers.read_byte(&RegByte::B),
-                cpu.registers.read_byte(&RegByte::C),
-                cpu.registers.read_word(&RegWord::BC)
-            );

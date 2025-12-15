@@ -1,12 +1,13 @@
-use std::iter::Cycle;
+// use std::iter::Cycle;
 
 use crate::clock;
 use crate::cpu;
 use crate::opcode::{OneByteOpCode, ThreeByteOpCode, TwoByteOpCode};
-use crate::registers::{self, RegByte, RegFlag, RegWord};
+use crate::registers::{RegByte, RegFlag, RegWord};
 
 // TODO: Add OpCodes. Refactor tests/build new ones. Implement clock cycles for each OpCode/fix clock cyles.
-// TODO: Increment Program Counter properly.
+// TODO: Increment Program Counter properly!!! Only stack related operations currently interact with program counter
+// TODO: Might need to fix ime related commands because they are supposed to go into effect: AFTER the NEXT instruction
 
 pub fn execute_one_byte_opcode(cpu: &mut cpu::Cpu, code: OneByteOpCode) {
     match code {
@@ -1005,21 +1006,8 @@ pub fn execute_one_byte_opcode(cpu: &mut cpu::Cpu, code: OneByteOpCode) {
                 return;
             }
 
-            let low_word: u16 = get_byte_from_stackpointer_dont_increment(cpu).into();
-            cpu.registers.increment_sp();
+            return_call(cpu);
 
-            let mut high_word: u16 = get_byte_from_stackpointer_dont_increment(cpu).into();
-            cpu.registers.increment_sp();
-
-            // 0x00FF becomes -> 0xFF00
-            high_word = high_word << 8;
-
-            // 0xFF00 & 0x00AB becomes -> 0xFFAB
-            let full_word = high_word | low_word;
-
-            cpu.registers.write_word(&RegWord::PC, full_word);
-
-            cpu.registers.write_flag(RegFlag::Zero, false);
             cpu.clock.cycle_clock(5);
         }
         OneByteOpCode::POP_BC => {
@@ -1035,7 +1023,6 @@ pub fn execute_one_byte_opcode(cpu: &mut cpu::Cpu, code: OneByteOpCode) {
             cpu.clock.cycle_clock(3);
         }
         OneByteOpCode::PUSH_BC => {
-            cpu.registers.pretty_print_word();
             cpu.registers.decrement_sp();
             load_byte_to_virtual_register_target(
                 cpu,
@@ -1050,14 +1037,206 @@ pub fn execute_one_byte_opcode(cpu: &mut cpu::Cpu, code: OneByteOpCode) {
                 &RegWord::SP,
             );
 
-            cpu.registers.pretty_print_word();
             cpu.clock.cycle_clock(4);
         }
-        OneByteOpCode::RST_00H => {}
-        OneByteOpCode::RET_Z => {}
-        OneByteOpCode::RET => {}
-        OneByteOpCode::PREFIX_CB => {} // SPECIAL PREFIX
-        OneByteOpCode::RST_08H => {}
+        OneByteOpCode::RST_00H => {
+            fast_reset_to_address(cpu, 0x0000);
+
+            cpu.clock.cycle_clock(4)
+        }
+        OneByteOpCode::RET_Z => {
+            if !cpu.registers.read_flag(RegFlag::Zero) {
+                cpu.clock.cycle_clock(2);
+                return;
+            }
+
+            return_call(cpu);
+
+            cpu.clock.cycle_clock(5);
+        }
+        OneByteOpCode::RET => {
+            return_call(cpu);
+
+            cpu.clock.cycle_clock(4);
+        }
+        OneByteOpCode::PREFIX_CB => {
+            // TODO: Decide how to handle PREFIX_CB
+            panic!(
+                "ERROR::Not yet implemented prefix opcodes! 
+                Why are you playing with this/why is this still here! Yoinked by Snow Leopard Claw!"
+            );
+        } // SPECIAL PREFIX
+        OneByteOpCode::RST_08H => {
+            fast_reset_to_address(cpu, 0x0008);
+
+            cpu.clock.cycle_clock(4)
+        }
+
+        // Dx
+        OneByteOpCode::RET_NC => {
+            if cpu.registers.read_flag(RegFlag::Carry) {
+                cpu.clock.cycle_clock(2);
+                return;
+            }
+
+            return_call(cpu);
+
+            cpu.clock.cycle_clock(5);
+        }
+        OneByteOpCode::POP_DE => {
+            let low_byte: u8 = get_byte_from_stackpointer_dont_increment(cpu);
+            cpu.registers.increment_sp();
+
+            let high_byte: u8 = get_byte_from_stackpointer_dont_increment(cpu);
+            cpu.registers.increment_sp();
+
+            cpu.registers.write_byte(&RegByte::D, high_byte);
+            cpu.registers.write_byte(&RegByte::E, low_byte);
+
+            cpu.clock.cycle_clock(3);
+        }
+        OneByteOpCode::PUSH_DE => {
+            cpu.registers.decrement_sp();
+            load_byte_to_virtual_register_target(
+                cpu,
+                cpu.registers.read_byte(&RegByte::D),
+                &RegWord::SP,
+            );
+
+            cpu.registers.decrement_sp();
+            load_byte_to_virtual_register_target(
+                cpu,
+                cpu.registers.read_byte(&RegByte::E),
+                &RegWord::SP,
+            );
+
+            cpu.clock.cycle_clock(4);
+        }
+        OneByteOpCode::RST_10H => {
+            fast_reset_to_address(cpu, 0x0010);
+
+            cpu.clock.cycle_clock(4)
+        }
+        OneByteOpCode::RET_C => {
+            if !cpu.registers.read_flag(RegFlag::Carry) {
+                cpu.clock.cycle_clock(2);
+                return;
+            }
+
+            return_call(cpu);
+
+            cpu.clock.cycle_clock(5);
+        }
+        OneByteOpCode::RETI => {
+            return_call(cpu);
+
+            cpu.registers.write_ime(true);
+
+            cpu.clock.cycle_clock(4);
+        }
+        OneByteOpCode::RST_18H => {
+            fast_reset_to_address(cpu, 0x0018);
+
+            cpu.clock.cycle_clock(4)
+        }
+
+        // Ex
+        OneByteOpCode::POP_HL => {
+            let low_byte: u8 = get_byte_from_stackpointer_dont_increment(cpu);
+            cpu.registers.increment_sp();
+
+            let high_byte: u8 = get_byte_from_stackpointer_dont_increment(cpu);
+            cpu.registers.increment_sp();
+
+            cpu.registers.write_byte(&RegByte::H, high_byte);
+            cpu.registers.write_byte(&RegByte::L, low_byte);
+
+            cpu.clock.cycle_clock(3);
+        }
+        OneByteOpCode::PUSH_HL => {
+            cpu.registers.decrement_sp();
+            load_byte_to_virtual_register_target(
+                cpu,
+                cpu.registers.read_byte(&RegByte::H),
+                &RegWord::SP,
+            );
+
+            cpu.registers.decrement_sp();
+            load_byte_to_virtual_register_target(
+                cpu,
+                cpu.registers.read_byte(&RegByte::L),
+                &RegWord::SP,
+            );
+
+            cpu.clock.cycle_clock(4);
+        }
+        OneByteOpCode::RST_20H => {
+            fast_reset_to_address(cpu, 0x0020);
+
+            cpu.clock.cycle_clock(4)
+        }
+        OneByteOpCode::JP_HLcontents => {
+            load_word_to_16bit_register(cpu, cpu.registers.read_word(&RegWord::HL), &RegWord::PC);
+            cpu.clock.cycle_clock(1);
+        }
+        OneByteOpCode::RST_28H => {
+            fast_reset_to_address(cpu, 0x0028);
+
+            cpu.clock.cycle_clock(4)
+        }
+
+        // Fx
+        OneByteOpCode::POP_AF => {
+            let low_byte: u8 = get_byte_from_stackpointer_dont_increment(cpu);
+            cpu.registers.increment_sp();
+
+            let high_byte: u8 = get_byte_from_stackpointer_dont_increment(cpu);
+            cpu.registers.increment_sp();
+
+            cpu.registers.write_byte(&RegByte::A, high_byte);
+            cpu.registers.write_byte(&RegByte::F, low_byte);
+
+            cpu.clock.cycle_clock(3);
+        }
+        OneByteOpCode::DI => {
+            cpu.registers.write_ime(false);
+            cpu.clock.cycle_clock(1);
+        }
+        OneByteOpCode::PUSH_AF => {
+            cpu.registers.decrement_sp();
+            load_byte_to_virtual_register_target(
+                cpu,
+                cpu.registers.read_byte(&RegByte::A),
+                &RegWord::SP,
+            );
+
+            cpu.registers.decrement_sp();
+            load_byte_to_virtual_register_target(
+                cpu,
+                cpu.registers.read_byte(&RegByte::F),
+                &RegWord::SP,
+            );
+
+            cpu.clock.cycle_clock(4);
+        }
+        OneByteOpCode::RST_30H => {
+            fast_reset_to_address(cpu, 0x0030);
+
+            cpu.clock.cycle_clock(4)
+        }
+        OneByteOpCode::LD_SP_HL => {
+            load_word_to_16bit_register(cpu, cpu.registers.read_word(&RegWord::HL), &RegWord::SP);
+            cpu.clock.cycle_clock(2);
+        }
+        OneByteOpCode::EI => {
+            cpu.registers.write_ime(true);
+            cpu.clock.cycle_clock(1);
+        }
+        OneByteOpCode::RST_38H => {
+            fast_reset_to_address(cpu, 0x0038);
+
+            cpu.clock.cycle_clock(4)
+        }
         _ => panic!("ERROR::Invalid One Byte OpCode! Yoinked by Jaguar Claw!"),
     }
 }
@@ -1117,6 +1296,11 @@ pub fn load_word_to_16bit_register(cpu: &mut cpu::Cpu, word: u16, register: &Reg
 
 pub fn get_byte_from_stackpointer_dont_increment(cpu: &mut cpu::Cpu) -> u8 {
     return cpu.memory.read_byte(cpu.registers.read_word(&RegWord::SP));
+}
+
+pub fn load_byte_into_stack_after_decrement_stack_pointer(cpu: &mut cpu::Cpu, byte: u8) {
+    decrement_virtual_register_ignore_flags(cpu, &RegWord::SP);
+    load_byte_to_virtual_register_target(cpu, byte, &RegWord::SP);
 }
 
 // Increment Helper Functions
@@ -1352,4 +1536,34 @@ pub fn get_word_from_high_and_low_byte(high_byte: u8, low_byte: u8) -> u16 {
     let mut low_mask: u16 = low_byte.into();
 
     10
+}
+
+// Stack Related Helper Functions
+pub fn return_call(cpu: &mut cpu::Cpu) {
+    let low_word: u16 = get_byte_from_stackpointer_dont_increment(cpu).into();
+    cpu.registers.increment_sp();
+
+    let mut high_word: u16 = get_byte_from_stackpointer_dont_increment(cpu).into();
+    cpu.registers.increment_sp();
+
+    // 0x00FF becomes -> 0xFF00
+    high_word = high_word << 8;
+
+    // 0xFF00 & 0x00AB becomes -> 0xFFAB
+    let full_word = high_word | low_word;
+
+    cpu.registers.write_word(&RegWord::PC, full_word);
+}
+
+pub fn fast_reset_to_address(cpu: &mut cpu::Cpu, address: u16) {
+    cpu.registers.increment_pc();
+
+    let [msb, lsb] = cpu.registers.read_word(&RegWord::PC).to_be_bytes();
+
+    // Load High then Low Byte into stack
+    load_byte_into_stack_after_decrement_stack_pointer(cpu, msb);
+    load_byte_into_stack_after_decrement_stack_pointer(cpu, lsb);
+
+    // Fast Jump (aka reset) to PC == 0x0008
+    load_word_to_16bit_register(cpu, address, &RegWord::PC);
 }

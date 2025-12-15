@@ -1035,4 +1035,57 @@ mod tests {
         assert_eq!(cpu.memory.read_byte(0x1EFD), 0x2A);
         assert_eq!(cpu.memory.read_byte(0x1EFC), 0xFF);
     }
+
+    #[test]
+    fn push_bc_and_underflow_stack() {
+        let mut cpu = cpu::Cpu::new();
+
+        // Setup BC
+        cpu.registers.write_word(&RegWord::BC, 0xBB19);
+
+        assert_eq!(cpu.registers.read_byte(&RegByte::B), 0xBB);
+        assert_eq!(cpu.registers.read_byte(&RegByte::C), 0x19);
+
+        // Setup stack
+        cpu.registers.write_word(&RegWord::SP, 0x0001);
+        cpu.memory
+            .write_byte(cpu.registers.read_word(&RegWord::SP), 0x22);
+
+        execute_one_byte_opcode(&mut cpu, OneByteOpCode::PUSH_BC);
+
+        assert_eq!(cpu.registers.read_word(&RegWord::SP), 0xFFFF);
+        assert_eq!(cpu.registers.read_word(&RegWord::BC), 0xBB19);
+        assert_eq!(cpu.registers.read_byte(&RegByte::B), 0xBB);
+        assert_eq!(cpu.registers.read_byte(&RegByte::C), 0x19);
+
+        assert_eq!(cpu.memory.read_byte(0x0001), 0x22);
+        assert_eq!(cpu.memory.read_byte(0x0000), 0xBB);
+        assert_eq!(cpu.memory.read_byte(0xFFFF), 0x19);
+    }
+
+    #[test]
+    fn fast_rst_to_address() {
+        let mut cpu = cpu::Cpu::new();
+
+        // Setup BC
+        cpu.registers.write_word(&RegWord::PC, 0xABCD);
+
+        // Setup stack
+        cpu.registers.write_word(&RegWord::SP, 0x1000);
+        cpu.memory
+            .write_byte(cpu.registers.read_word(&RegWord::SP), 0x99);
+
+        cpu.registers.pretty_print_word();
+        execute_one_byte_opcode(&mut cpu, OneByteOpCode::RST_08H);
+        cpu.registers.pretty_print_word();
+
+        assert_eq!(cpu.registers.read_word(&RegWord::SP), 0x0FFE);
+        assert_eq!(cpu.registers.read_word(&RegWord::PC), 0x0008);
+
+        assert_eq!(cpu.memory.read_byte(0x1000), 0x99);
+        assert_eq!(cpu.memory.read_byte(0x0FFF), 0xAB);
+        // 0xCD becomes 0xCE because it's the low byte and we have to increment program counter once
+        // To push the address of the byte AFTER THIS OPCODE unto the stack.
+        assert_eq!(cpu.memory.read_byte(0x0FFE), 0xCE);
+    }
 }

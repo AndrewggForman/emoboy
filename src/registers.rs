@@ -37,6 +37,7 @@ pub struct Registers {
     l: u8,
     sp: u16,
     pc: u16,
+    ime: bool,
 }
 
 impl Registers {
@@ -56,6 +57,7 @@ impl Registers {
             // > end of memory towards the beginning)
             sp: 0x0000,
             pc: 0x0000,
+            ime: false,
         }
     }
 
@@ -139,6 +141,14 @@ impl Registers {
             let mask = !(register_flag as u8);
             self.f = self.f & mask;
         }
+    }
+
+    pub fn read_ime(&mut self) -> bool {
+        self.ime
+    }
+
+    pub fn write_ime(&mut self, bool: bool) {
+        self.ime = bool;
     }
 
     // Move to OpCode, rename to get_carry_and_update_flag
