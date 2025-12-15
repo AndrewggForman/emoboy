@@ -45,7 +45,7 @@ pub struct Gpu {
 }
 
 impl Gpu {
-    pub fn new () -> Self {
+    pub fn new() -> Self {
         Self {
             vram: [0; VRAM_SIZE],
             oam: [0; OAM_SIZE],
@@ -79,7 +79,7 @@ impl Gpu {
             OAM_DMA_SOURCE_ADDRESS => self.oam_dma_source,
             WINDOW_Y_ADDRESS => self.window_y,
             WINDOW_X_ADDRESS => self.window_x, // TODO +- 7?
-            _ => 0xFF
+            _ => 0xFF,
         }
     }
 
@@ -98,7 +98,7 @@ impl Gpu {
             WINDOW_X_ADDRESS => self.window_x = value, // TODO +- 7?
             _ => {
                 println!("Unhandled write to {} with {}", address, value);
-            },
+            }
         }
     }
 
@@ -141,7 +141,7 @@ impl Gpu {
                 if self.clock >= NUM_CYCLES_VBLANK {
                     self.set_lcd_y(self.lcd_y + 1);
                     self.clock = self.clock % NUM_CYCLES_VBLANK;
-                    
+
                     if self.lcd_y >= MAX_SCANLINES {
                         self.lcd_status.mode = Mode::Oam;
                         self.set_lcd_y(0);
@@ -202,21 +202,31 @@ impl LcdStatus {
 
     pub fn read_byte(&self) -> u8 {
         let mut ret: u8 = 0;
-        if self.coincidence_interrupt { ret = ret | 0b0100_0000 }
-        if self.oam_scan_interrupt    { ret = ret | 0b0010_0000 }
-        if self.v_blank_interrupt     { ret = ret | 0b0001_0000 }
-        if self.h_blank_interrupt     { ret = ret | 0b0000_1000 }
-        if self.coincidence_flag      { ret = ret | 0b0000_0100 }
+        if self.coincidence_interrupt {
+            ret = ret | 0b0100_0000
+        }
+        if self.oam_scan_interrupt {
+            ret = ret | 0b0010_0000
+        }
+        if self.v_blank_interrupt {
+            ret = ret | 0b0001_0000
+        }
+        if self.h_blank_interrupt {
+            ret = ret | 0b0000_1000
+        }
+        if self.coincidence_flag {
+            ret = ret | 0b0000_0100
+        }
 
         ret | (self.mode as u8)
     }
 
     pub fn write_byte(&mut self, data: u8) {
         self.coincidence_interrupt = data & 0b0100_0000 > 0;
-        self.oam_scan_interrupt    = data & 0b0010_0000 > 0;
-        self.v_blank_interrupt     = data & 0b0001_0000 > 0;
-        self.h_blank_interrupt     = data & 0b0000_1000 > 0;
-        self.coincidence_flag      = data & 0b0000_0100 > 0;
+        self.oam_scan_interrupt = data & 0b0010_0000 > 0;
+        self.v_blank_interrupt = data & 0b0001_0000 > 0;
+        self.h_blank_interrupt = data & 0b0000_1000 > 0;
+        self.coincidence_flag = data & 0b0000_0100 > 0;
 
         let mode_bits = data & 0b0000_0011;
         match mode_bits {
@@ -224,12 +234,13 @@ impl LcdStatus {
             1 => self.mode = Mode::Vblank,
             2 => self.mode = Mode::Oam,
             3 => self.mode = Mode::Draw,
-            _ => panic!("Unexpected LcdStatus Mode")
+            _ => panic!("Unexpected LcdStatus Mode"),
         }
     }
 }
 
 pub struct LcdControl {
+    // each bool represents one bit (bitflag)
     enabled: bool,
     window_tile_map: bool,
     window_enabled: bool,
@@ -257,26 +268,42 @@ impl LcdControl {
     pub fn read_byte(&self) -> u8 {
         let mut control_byte: u8 = 0;
 
-        if self.enabled                       { control_byte |= 0b1000_0000 }
-        if self.window_tile_map               { control_byte |= 0b0100_0000 }
-        if self.window_enabled                { control_byte |= 0b0010_0000 }
-        if self.tile_data_select              { control_byte |= 0b0001_0000 }
-        if self.background_tile_map_select    { control_byte |= 0b0000_1000 }
-        if self.large_sprite_size_enabled     { control_byte |= 0b0000_0100 }
-        if self.sprites_enabled               { control_byte |= 0b0000_0010 }
-        if self.background_and_window_enabled { control_byte |= 0b0000_0001 }
+        if self.enabled {
+            control_byte |= 0b1000_0000
+        }
+        if self.window_tile_map {
+            control_byte |= 0b0100_0000
+        }
+        if self.window_enabled {
+            control_byte |= 0b0010_0000
+        }
+        if self.tile_data_select {
+            control_byte |= 0b0001_0000
+        }
+        if self.background_tile_map_select {
+            control_byte |= 0b0000_1000
+        }
+        if self.large_sprite_size_enabled {
+            control_byte |= 0b0000_0100
+        }
+        if self.sprites_enabled {
+            control_byte |= 0b0000_0010
+        }
+        if self.background_and_window_enabled {
+            control_byte |= 0b0000_0001
+        }
 
         control_byte
     }
 
     pub fn write_byte(&mut self, data: u8) {
-        self.enabled                       = data & 0b1000_0000 > 0;
-        self.window_tile_map               = data & 0b0100_0000 > 0;
-        self.window_enabled                = data & 0b0010_0000 > 0;
-        self.tile_data_select              = data & 0b0001_0000 > 0;
-        self.background_tile_map_select    = data & 0b0000_1000 > 0;
-        self.large_sprite_size_enabled     = data & 0b0000_0100 > 0;
-        self.sprites_enabled               = data & 0b0000_0010 > 0;
+        self.enabled = data & 0b1000_0000 > 0;
+        self.window_tile_map = data & 0b0100_0000 > 0;
+        self.window_enabled = data & 0b0010_0000 > 0;
+        self.tile_data_select = data & 0b0001_0000 > 0;
+        self.background_tile_map_select = data & 0b0000_1000 > 0;
+        self.large_sprite_size_enabled = data & 0b0000_0100 > 0;
+        self.sprites_enabled = data & 0b0000_0010 > 0;
         self.background_and_window_enabled = data & 0b0000_0001 > 0;
     }
 }
