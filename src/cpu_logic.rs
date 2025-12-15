@@ -1345,8 +1345,8 @@ pub fn decrement_8bit(value: u8) -> (u8, bool, bool) {
     let zero = result == 0;
 
     // TODO: THINK CORRECT -> talk to tint/look at it with someone
-    let is_half_borrow =
-        (((result & 0x10) == 0) && ((result & 0x08) == 0x08)) && ((value & 0x10) == 0x10);
+
+    let is_half_borrow = (value & 0x0f) < (1 & 0x0f);
 
     (result, zero, is_half_borrow)
 }
