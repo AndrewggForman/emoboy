@@ -57,6 +57,8 @@ impl Registers {
             // > end of memory towards the beginning)
             sp: 0x0000,
             pc: 0x0000,
+            // TODO: Check if IME turns off all interrupts, or simply disables read/writing to them ->
+            // E.g. a turned on interrupt register would remain turned on
             ime: false,
         }
     }
@@ -371,5 +373,14 @@ mod tests {
         registers.pretty_print_word();
 
         assert_eq!(registers.c, 0b0000_1000); // 0b0000_000
+    }
+
+    #[test]
+    fn increment_pc_tester() {
+        let mut registers = Registers::new();
+
+        assert_eq!(registers.pc, 0x00);
+        registers.increment_pc();
+        assert_eq!(registers.pc, 0x01);
     }
 }

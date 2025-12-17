@@ -1059,13 +1059,6 @@ pub fn execute_one_byte_opcode(cpu: &mut cpu::Cpu, code: OneByteOpCode) {
 
             cpu.clock.cycle_clock(4);
         }
-        OneByteOpCode::PREFIX_CB => {
-            // TODO: Decide how to handle PREFIX_CB
-            panic!(
-                "ERROR::Not yet implemented prefix opcodes! 
-                Why are you playing with this/why is this still here! Yoinked by Snow Leopard Claw!"
-            );
-        } // SPECIAL PREFIX
         OneByteOpCode::RST_08H => {
             fast_reset_to_address(cpu, 0x0008);
 

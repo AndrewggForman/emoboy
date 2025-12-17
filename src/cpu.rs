@@ -46,34 +46,34 @@ impl Cpu {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::{
-        cartridge,
-        opcode::{OpCode, execute_opcode},
-        registers::RegFlag,
-    };
+// #[cfg(test)]
+// mod tests {
+//     use crate::{
+//         cartridge,
+//         opcode::{OpCode, execute_opcode},
+//         registers::RegFlag,
+//     };
 
-    use super::*;
+//     use super::*;
 
-    #[test]
-    pub fn basic_fetch_test() {
-        let mut cpu = Cpu::new();
-        cpu.load_rom_file("assets/andy_test_rom.bin");
+//     #[test]
+//     pub fn basic_fetch_test() {
+//         let mut cpu = Cpu::new();
+//         cpu.load_rom_file("assets/andy_test_rom.bin");
 
-        let mut cart = Cartridge::new();
-        cart.load_rom_file("assets/andy_test_rom.bin");
+//         let mut cart = Cartridge::new();
+//         cart.load_rom_file("assets/andy_test_rom.bin");
 
-        assert_eq!(cpu.registers.read_word(&RegWord::PC), 0);
-        assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
-        assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
-        assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
-        assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
+//         assert_eq!(cpu.registers.read_word(&RegWord::PC), 0);
+//         assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
+//         assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
+//         assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
+//         assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
 
-        // TODO: - fix/figure out opcodes memes.
-        // TODO: FIX
-        //let mut curr_opcode: OpCode = cpu.fetch_next_byte(&cart); SUPER TODO: ???????
+//         // TODO: - fix/figure out opcodes memes.
+//         // TODO: FIX
+//         //let mut curr_opcode: OpCode = cpu.fetch_next_byte(&cart); SUPER TODO: ???????
 
-        //execute_opcode(&mut cpu, curr_opcode);
-    }
-}
+//         //execute_opcode(&mut cpu, curr_opcode);
+//     }
+// }

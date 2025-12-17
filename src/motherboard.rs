@@ -2,7 +2,9 @@ use crate::{
     cartridge::Cartridge,
     clock::Clock,
     cpu::Cpu,
+    cpu_logic::execute_one_byte_opcode,
     memory::Memory,
+    opcode::OneByteOpCode,
     registers::{RegWord, Registers},
 };
 
@@ -11,11 +13,12 @@ use crate::{
 // > turn it into public/learning experience.
 
 pub struct Motherboard {
-    registers: Registers,
-    memory: Memory,
-    cartridge: Cartridge,
-    clock: Clock,
-    cpu: Cpu,
+    // TODO: Yap with yomt. Making these public for now for the purpose of building unit tests.
+    pub registers: Registers,
+    pub memory: Memory,
+    pub cartridge: Cartridge,
+    pub clock: Clock,
+    pub cpu: Cpu,
 }
 
 impl Motherboard {
@@ -34,10 +37,12 @@ impl Motherboard {
     // Get next instruction from memory by reading program counter
     // > and increment program counter
     fn fetch_next_byte(&mut self) -> u8 {
+        println!("pc: {}", self.cpu.registers.read_word(&RegWord::PC));
         let byte = self
             .memory
             .read_byte(self.registers.read_word(&RegWord::PC));
         self.registers.increment_pc();
+        println!("pc: {}", self.cpu.registers.read_word(&RegWord::PC));
         byte
     }
 
@@ -284,7 +289,7 @@ impl Motherboard {
             0xC9 => 1, // RET (TODO: ?)
             0xCA => 3, // JP Z a16
             // SPECIAL BELOW: PREFIX TO OTHER OPCODES
-            0xCB => 1, // PREFIX CB (TODO: technically a 2/3? since swaps opcodes and does with it)
+            0xCB => 3, // PREFIX CB (TODO: technically a 2/3? since swaps opcodes and does with it)
             0xCC => 3, // CALL Z a16
             0xCD => 3, // CALL (TODO: ?) a16
             0xCE => 2, // ADC A d8
@@ -343,23 +348,76 @@ impl Motherboard {
             0xFD => 1, // BLANK
             0xFE => 2, // CP (TODO: ? A) d8
             0xFF => 1, // RST 38H (TODO: I don't understand this one at all)
-
-            // Panic!
             _ => panic!("Unsupported instruction byte. Get the lobster claw!"),
         }
 
         // TODO: Handle prefix opcode table memes.
     }
 
-    fn execute_opcode(instruction: u8, instruction_length: u8) {
+    fn execute_opcode(&mut self, instruction: u8, instruction_length: u8) {
         // TODO, add first pass over to check if prefixed instruction before handoff
         // OR can do after handoff INSIDE the cpu/after passing it along
 
         match instruction_length {
-            1 => println!("placeholder!"), // TODO: Pass opcode to CPU directly
+            1 => {
+                execute_one_byte_opcode(&mut self.cpu, instruction.into());
+            }
+            // TODO: Pass opcode to CPU directly
             2 => println!("placeholder!"), // TODO: Pass array with opcode + next byte
             3 => println!("placeholder!"), // TODO: Pass array with opcode + next two bytes
             _ => panic!("Unsupported instruction length. Get the lobster hammer!"),
         }
+    }
+
+    // TODO: Turn this into a non-WIP loop loop.
+    fn main_program(&mut self) {
+        loop {
+            let instruction = self.fetch_next_byte();
+            let instruction_length = Motherboard::get_instruction_length(instruction);
+            println!("instruction: {}", instruction);
+            self.execute_opcode(instruction, instruction_length);
+        }
+    }
+
+    // TODO: CURRENTLY EXISTS FOR TESTING
+    fn perform_one_instruction(&mut self) {
+        let instruction = self.fetch_next_byte();
+        println!("pc: {}", self.cpu.registers.read_word(&RegWord::PC));
+        let instruction_length = Motherboard::get_instruction_length(instruction);
+        println!("instruction: {}", instruction);
+        self.execute_opcode(instruction, instruction_length);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{cpu_logic::load_byte_to_virtual_register_target, motherboard, registers::RegByte};
+
+    use super::*;
+
+    #[test]
+    fn chain_commands_using_funcs_all_files() {
+        let mut motherboard = Motherboard::new();
+
+        // PC is at the 21st memory address/instruction
+        motherboard.cpu.registers.write_word(&RegWord::PC, 0x20);
+        // At 22nd memory instruction lives the opcode for loading A to B
+        motherboard.memory.write_byte(0x21, 0x47);
+        // At the 21st memory instruction lives the opcode for incrementing A
+        load_byte_to_virtual_register_target(&mut motherboard.cpu, 0x3C, &RegWord::PC);
+
+        motherboard.cpu.registers.pretty_print_word();
+
+        motherboard.perform_one_instruction();
+
+        assert_eq!(motherboard.cpu.registers.read_word(&RegWord::PC), 0x21);
+        assert_eq!(motherboard.cpu.registers.read_byte(&RegByte::A), 0x01);
+        assert_eq!(motherboard.cpu.registers.read_byte(&RegByte::B), 0x00);
+
+        motherboard.perform_one_instruction();
+
+        assert_eq!(motherboard.cpu.registers.read_word(&RegWord::PC), 0x22);
+        assert_eq!(motherboard.cpu.registers.read_byte(&RegByte::A), 0x01);
+        assert_eq!(motherboard.cpu.registers.read_byte(&RegByte::B), 0x01);
     }
 }
