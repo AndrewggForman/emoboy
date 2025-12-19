@@ -11,6 +11,7 @@ mod motherboard;
 mod opcode;
 mod opcode_tests;
 mod registers;
+mod gpu;
 
 fn main() {
     println!("Hello, world!");
