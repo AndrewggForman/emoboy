@@ -1,3 +1,5 @@
+// TODO: BOTH CPU AND MOTHERBORD HAVE THEIR OWN MEMORY!!!! HOW DO WE WANT TO HANDLE THIS.
+
 use crate::{
     cartridge::Cartridge,
     clock::Clock,
@@ -37,12 +39,18 @@ impl Motherboard {
     // Get next instruction from memory by reading program counter
     // > and increment program counter
     fn fetch_next_byte(&mut self) -> u8 {
-        println!("pc: {}", self.cpu.registers.read_word(&RegWord::PC));
+        println!(
+            "pc at beginning of fetch_next_byte: {}",
+            self.cpu.registers.read_word(&RegWord::PC)
+        );
         let byte = self
             .memory
             .read_byte(self.registers.read_word(&RegWord::PC));
         self.registers.increment_pc();
-        println!("pc: {}", self.cpu.registers.read_word(&RegWord::PC));
+        println!(
+            "pc at end of fetch_next_byte: {}",
+            self.cpu.registers.read_word(&RegWord::PC)
+        );
         byte
     }
 
@@ -381,11 +389,22 @@ impl Motherboard {
 
     // TODO: CURRENTLY EXISTS FOR TESTING
     fn perform_one_instruction(&mut self) {
+        println!(
+            "pc pre fetching next byte: {}",
+            self.cpu.registers.read_word(&RegWord::PC)
+        );
         let instruction = self.fetch_next_byte();
-        println!("pc: {}", self.cpu.registers.read_word(&RegWord::PC));
+        println!(
+            "pc post fetching next byte: {}",
+            self.cpu.registers.read_word(&RegWord::PC)
+        );
         let instruction_length = Motherboard::get_instruction_length(instruction);
         println!("instruction: {}", instruction);
         self.execute_opcode(instruction, instruction_length);
+        println!(
+            "pc post executing opcode {}",
+            self.cpu.registers.read_word(&RegWord::PC)
+        );
     }
 }
 
@@ -395,29 +414,34 @@ mod tests {
 
     use super::*;
 
+    // TODO: !!!Fix post motherboard-cpu rework!!!
     #[test]
     fn chain_commands_using_funcs_all_files() {
         let mut motherboard = Motherboard::new();
 
         // PC is at the 21st memory address/instruction
-        motherboard.cpu.registers.write_word(&RegWord::PC, 0x20);
+        motherboard.registers.write_word(&RegWord::PC, 0x20);
         // At 22nd memory instruction lives the opcode for loading A to B
         motherboard.memory.write_byte(0x21, 0x47);
         // At the 21st memory instruction lives the opcode for incrementing A
-        load_byte_to_virtual_register_target(&mut motherboard.cpu, 0x3C, &RegWord::PC);
+        motherboard.memory.write_byte(0x20, 0x3C);
 
         motherboard.cpu.registers.pretty_print_word();
 
-        motherboard.perform_one_instruction();
-
-        assert_eq!(motherboard.cpu.registers.read_word(&RegWord::PC), 0x21);
-        assert_eq!(motherboard.cpu.registers.read_byte(&RegByte::A), 0x01);
-        assert_eq!(motherboard.cpu.registers.read_byte(&RegByte::B), 0x00);
+        assert_eq!(motherboard.registers.read_word(&RegWord::PC), 0x20);
+        assert_eq!(motherboard.memory.read_byte(0x20), 0x3C);
+        assert_eq!(motherboard.memory.read_byte(0x21), 0x47);
 
         motherboard.perform_one_instruction();
 
-        assert_eq!(motherboard.cpu.registers.read_word(&RegWord::PC), 0x22);
-        assert_eq!(motherboard.cpu.registers.read_byte(&RegByte::A), 0x01);
-        assert_eq!(motherboard.cpu.registers.read_byte(&RegByte::B), 0x01);
+        assert_eq!(motherboard.registers.read_word(&RegWord::PC), 0x21);
+        assert_eq!(motherboard.registers.read_byte(&RegByte::A), 0x01);
+        assert_eq!(motherboard.registers.read_byte(&RegByte::B), 0x00);
+
+        motherboard.perform_one_instruction();
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::PC), 0x22);
+        assert_eq!(motherboard.registers.read_byte(&RegByte::A), 0x01);
+        assert_eq!(motherboard.registers.read_byte(&RegByte::B), 0x01);
     }
 }

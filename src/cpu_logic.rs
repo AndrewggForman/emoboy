@@ -8,6 +8,7 @@ use crate::registers::{RegByte, RegFlag, RegWord};
 // TODO: Add OpCodes. Refactor tests/build new ones. Implement clock cycles for each OpCode/fix clock cyles.
 // TODO: Increment Program Counter properly!!! Only stack related operations currently interact with program counter
 // TODO: Might need to fix ime related commands because they are supposed to go into effect: AFTER the NEXT instruction
+// TODO: !!!Rewrite with motherboard instead of cpu.!!!
 
 pub fn execute_one_byte_opcode(cpu: &mut cpu::Cpu, code: OneByteOpCode) {
     match code {

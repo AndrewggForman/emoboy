@@ -42,7 +42,7 @@ impl Memory {
         self.cartridge.load_rom_file(file_path);
     }
 
-    // TODO: Look over/talk with tint (does this follow the endianness of the machine?)
+    // TODO: Shouldn't we write to both the memory 
     pub fn read_byte(&self, address: u16) -> u8 {
         match address {
             CARTRIDGE_ROM_BANK_0_START..=CARTRIDGE_ROM_BANK_N_END => {
@@ -78,5 +78,8 @@ impl Memory {
             IE_REGISTER => self._memory[address as usize] = value,
             _ => panic!("Unexpected Memory::write_byte {} {}", address, value),
         };
+    }
+    pub fn print_bytes(&mut self, start_address: u16, end_address: u16) {
+        
     }
 }

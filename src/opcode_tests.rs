@@ -1,4 +1,4 @@
-// TODO: Fixed Borked tests (using old helper functions)
+// TODO: !!!Rewrite with motherboard instead of cpu.!!!
 #[cfg(test)]
 mod tests {
     use crate::{cpu, cpu_logic::*, opcode::*, registers::*};
