@@ -9,7 +9,7 @@ use crate::{
 // TODO: Remove all mentions of andy test rom OR create new rom
 
 pub struct Cpu {
-    pub registers: Registers,
+    //pub registers: Registers,
     pub memory: Memory, // TODO-Talk with tint, was memory supposed to be private? I don't know how else to access it in op-codes to do HL commands
     pub clock: Clock,
     gpu: Gpu,
@@ -30,18 +30,18 @@ pub struct Cpu {
 impl Cpu {
     pub fn new() -> Self {
         Self {
-            registers: Registers::new(),
+            //registers: Registers::new(),
             memory: Memory::new(),
             clock: Clock::new(),
             gpu: Gpu::new(),
         }
     }
 
-    pub fn fetch_next_byte(&mut self, cartridge: &Cartridge) -> u8 {
-        let next_byte = cartridge.bytes[self.registers.read_word(&RegWord::PC) as usize];
-        self.registers.increment_pc();
-        next_byte
-    }
+    // pub fn fetch_next_byte(&mut self, cartridge: &Cartridge) -> u8 {
+    //     let next_byte = cartridge.bytes[self.registers.read_word(&RegWord::PC) as usize];
+    //     self.registers.increment_pc();
+    //     next_byte
+    // }
 
     pub fn load_rom_file(&mut self, file_path: &str) {
         self.memory.load_rom_file(file_path);
