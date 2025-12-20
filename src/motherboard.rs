@@ -54,6 +54,10 @@ impl Motherboard {
         byte
     }
 
+    pub fn load_rom_file(&mut self, file_path: &str) {
+        self.memory.load_rom_file(file_path);
+    }
+
     // Get length of instruction (How many bytes of data needed, always between 1 (the initial bit) and 3 (two additional immediate bytes))
     fn get_instruction_length(instruction: u8) -> u8 {
         // TEMP: Working glossary for comments following instructions
