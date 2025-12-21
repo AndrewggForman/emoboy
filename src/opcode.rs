@@ -463,6 +463,49 @@ pub enum OneByteOpCode {
     RST_38H = 0xFF,
 }
 
+impl From<u8> for TwoByteOpCode {
+    fn from(code: u8) -> Self {
+        match code {
+            // 0x
+            0x06 => TwoByteOpCode::LD_B_D8,
+            0x08 => TwoByteOpCode::LD_C_D8,
+            // 1x
+            0x10 => TwoByteOpCode::STOP,
+            0x16 => TwoByteOpCode::LD_D_D8,
+            0x18 => TwoByteOpCode::JR_R8,
+            0x1E => TwoByteOpCode::LD_E_D8,
+            // 2x
+            0x20 => TwoByteOpCode::JR_NZ_R8,
+            0x26 => TwoByteOpCode::LD_H_D8,
+            0x28 => TwoByteOpCode::JR_Z_R8,
+            0x2E => TwoByteOpCode::LD_L_D8,
+            // 3x
+            0x30 => TwoByteOpCode::JR_NC_R8,
+            0x36 => TwoByteOpCode::LD_HLcontents_D8,
+            0x38 => TwoByteOpCode::JR_C_R8,
+            0x3E => TwoByteOpCode::LD_A_D8,
+            // Cx
+            0xC6 => TwoByteOpCode::ADD_A_D8,
+            0xCE => TwoByteOpCode::ADC_A_D8,
+            // Dx
+            0xD6 => TwoByteOpCode::SUB_D8,
+            0xDE => TwoByteOpCode::SBC_A_D8,
+            // Ex
+            0xE0 => TwoByteOpCode::LDH_A8contents_A,
+            0xE2 => TwoByteOpCode::LD_Ccontents_A,
+            0xE6 => TwoByteOpCode::AND_D8,
+            0xE8 => TwoByteOpCode::ADD_SP_R8,
+            0xEE => TwoByteOpCode::XOR_D8,
+            // Fx
+            0xF0 => TwoByteOpCode::LDH_A_A8contents,
+            0xF2 => TwoByteOpCode::LD_A_Ccontents,
+            0xF6 => TwoByteOpCode::OR_D8,
+            0xF8 => TwoByteOpCode::LD_HL_SPplusR8,
+            0xFE => TwoByteOpCode::CP_D8,
+        }
+    }
+}
+
 pub enum TwoByteOpCode {
     // 0x
     LD_B_D8 = 0x06,
@@ -509,6 +552,37 @@ pub enum TwoByteOpCode {
     CP_D8 = 0xFE,
 }
 
+impl From<u8> for ThreeByteOpCode {
+    fn from(code: u8) -> Self {
+        match code {
+            // 0x
+            0x01 => ThreeByteOpCode::LD_BC_D16,
+            0x08 => ThreeByteOpCode::LD_A16contents_SP,
+            // 1x
+            0x11 => ThreeByteOpCode::LD_DE_D16,
+            // 2x
+            0x21 => ThreeByteOpCode::LD_HL_D16,
+            // 3x
+            0x31 => ThreeByteOpCode::LD_SP_D16,
+            // Cx
+            0xC2 => ThreeByteOpCode::JP_NZ_A16,
+            0xC3 => ThreeByteOpCode::JP_A16,
+            0xC4 => ThreeByteOpCode::CALL_NZ_A16,
+            0xCA => ThreeByteOpCode::JP_Z_A16,
+            0xCC => ThreeByteOpCode::CALL_Z_A16,
+            0xCD => ThreeByteOpCode::CALL_A16,
+            // Dx
+            0xD2 => ThreeByteOpCode::JP_NC_A16,
+            0xD4 => ThreeByteOpCode::CALL_NC_A16,
+            0xDA => ThreeByteOpCode::JP_C_16,
+            0xDC => ThreeByteOpCode::CALL_C_A16,
+            // Ex
+            0xEA => ThreeByteOpCode::LD_A16contents_A,
+            // Fx
+            0xFA => ThreeByteOpCode::LD_A_A16contents,
+        }
+    }
+}
 pub enum ThreeByteOpCode {
     // 0x
     LD_BC_D16 = 0x01,
