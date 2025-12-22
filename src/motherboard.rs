@@ -419,11 +419,6 @@ impl Motherboard {
             }
             _ => panic!("ERROR::"),
         }
-        self.execute_opcode(instruction, instruction_length);
-        // println!(
-        //     "pc post executing opcode {}",
-        //     self.registers.read_word(&RegWord::PC)
-        // );
     }
 
     fn perform_two_byte_instruction(&mut self) {

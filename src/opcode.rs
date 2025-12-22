@@ -502,6 +502,9 @@ impl From<u8> for TwoByteOpCode {
             0xF6 => TwoByteOpCode::OR_D8,
             0xF8 => TwoByteOpCode::LD_HL_SPplusR8,
             0xFE => TwoByteOpCode::CP_D8,
+            _ => {
+                panic!("ERROR::Tried to use an illegal TwoByteOpCode. Yoinked by Polar Bear Claw!")
+            }
         }
     }
 }
@@ -580,6 +583,9 @@ impl From<u8> for ThreeByteOpCode {
             0xEA => ThreeByteOpCode::LD_A16contents_A,
             // Fx
             0xFA => ThreeByteOpCode::LD_A_A16contents,
+            _ => panic!(
+                "ERROR::Tried to use an illegal OneByteOpCode. Yoinked by Leopard Seal Claw!"
+            ),
         }
     }
 }

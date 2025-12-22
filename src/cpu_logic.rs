@@ -1333,6 +1333,34 @@ pub fn execute_two_byte_opcode(
     byte1: u8,
 ) {
     match code {
+        // 0x
+        TwoByteOpCode::LD_B_D8 => {
+            motherboard.registers.write_byte(&RegByte::B, byte1);
+            motherboard.clock.cycle_clock(2);
+        }
+        TwoByteOpCode::LD_C_D8 => {
+            motherboard.registers.write_byte(&RegByte::C, byte1);
+            motherboard.clock.cycle_clock(2);
+        }
+        // 1x
+        TwoByteOpCode::STOP => {
+            // TODO: Look into more later
+        }
+        TwoByteOpCode::LD_D_D8 => {
+            motherboard.registers.write_byte(&RegByte::D, byte1);
+            motherboard.clock.cycle_clock(2);
+        }
+        TwoByteOpCode::JR_R8 => {
+            let signed_byte1: i8 = byte1 as i8;
+            let current_address = motherboard.registers.read_word(&RegWord::PC);
+            let signed_address: i16 = current_address as i16;
+            let new_address = signed_address.wrapping_add(signed_byte1.into());
+
+            motherboard
+                .registers
+                .write_word(&RegWord::PC, new_address as u16);
+        }
+        TwoByteOpCode::LD_E_D8 => {}
         _ => panic!("ERROR::Invalid Two Byte OpCode! Yoinked by Lobster Claw!"),
     }
 }
