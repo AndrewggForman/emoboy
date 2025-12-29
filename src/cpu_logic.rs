@@ -1526,6 +1526,49 @@ pub fn execute_two_byte_opcode(
             bitwise_byte_xor_a(motherboard, byte1);
             motherboard.clock.cycle_clock(2);
         }
+        // Fx
+        TwoByteOpCode::LDH_A_A8contents => {
+            let address: u16 = 0xFF00 | byte1 as u16;
+
+            motherboard
+                .registers
+                .write_byte(&RegByte::A, motherboard.memory.read_byte(address));
+
+            motherboard.clock.cycle_clock(3);
+        }
+        TwoByteOpCode::OR_N8 => {
+            bitwise_byte_or_a(motherboard, byte1);
+            motherboard.clock.cycle_clock(2);
+        }
+        // TODO: Check later. same as ADD SP r8, but also check if SP should be updated here or just HL
+        TwoByteOpCode::LD_HL_SPplusR8 => {
+            let signed_byte1: i8 = byte1 as i8;
+            let current_sp = motherboard.registers.read_word(&RegWord::SP);
+            let signed_sp: i16 = current_sp as i16;
+
+            let half_carry = ((current_sp & 0xF) + (byte1 & 0xF) as u16) > 0xF;
+            let full_carry = ((current_sp & 0xFF) + (byte1 & 0xFF) as u16) > 0xFF;
+
+            let new_hl = signed_sp.wrapping_add(signed_byte1.into());
+
+            motherboard
+                .registers
+                .write_word(&RegWord::HL, new_hl as u16);
+
+            motherboard
+                .registers
+                .write_flag(RegFlag::HalfCarry, half_carry);
+            motherboard.registers.write_flag(RegFlag::Carry, full_carry);
+            motherboard.registers.write_flag(RegFlag::Zero, false);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Subtraction, false);
+            motherboard.clock.cycle_clock(3);
+        }
+        TwoByteOpCode::CP_N8 => {
+            compare_byte_to_a(motherboard, byte1);
+            motherboard.clock.cycle_clock(2);
+        }
         _ => panic!("ERROR::Invalid Two Byte OpCode! Yoinked by Lobster Claw!"),
     }
 }

@@ -2562,4 +2562,23 @@ mod tests {
         assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), true);
         assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), true);
     }
+
+    // LD FF?? Related tests
+
+    #[test]
+    fn loadhigh_a_a8() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        motherboard.memory.write_byte(0xFFFE, 0x21);
+        motherboard.memory.write_byte(0xFE, 0x99); // Shouldn't hit this.
+
+        execute_two_byte_opcode(&mut motherboard, TwoByteOpCode::LDH_A_A8contents, 0xFE);
+
+        assert_eq!(motherboard.registers.read_byte(&RegByte::A), 0x21);
+
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
+    }
 }
