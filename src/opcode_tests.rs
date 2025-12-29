@@ -2513,20 +2513,21 @@ mod tests {
         assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
     }
 
+    // TODO: Look over this test, negatives spooky
     #[test]
     fn negative_r8_added_to_sp() {
         let mut motherboard = motherboard::Motherboard::new();
 
         motherboard.registers.write_word(&RegWord::SP, 0x0010);
 
-        execute_two_byte_opcode(&mut motherboard, TwoByteOpCode::ADD_SP_R8, -1); // -5
+        execute_two_byte_opcode(&mut motherboard, TwoByteOpCode::ADD_SP_R8, 0xFF); // -1
 
-        assert_eq!(motherboard.registers.read_word(&RegWord::SP), 0x0FFB);
+        assert_eq!(motherboard.registers.read_word(&RegWord::SP), 0x000F);
 
         assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), false);
         assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), false);
         assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), false);
-        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), true);
     }
 
     #[test]
@@ -2535,7 +2536,7 @@ mod tests {
 
         motherboard.registers.write_word(&RegWord::SP, 0x000F);
 
-        execute_two_byte_opcode(&mut motherboard, TwoByteOpCode::ADD_SP_R8, 0x01);
+        execute_two_byte_opcode(&mut motherboard, TwoByteOpCode::ADD_SP_R8, 0x01); // 1
 
         assert_eq!(motherboard.registers.read_word(&RegWord::SP), 0x0010);
 
@@ -2545,15 +2546,16 @@ mod tests {
         assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
     }
 
+    // TODO: Look over this test, negatives spooky
     #[test]
     fn half_carry_from_negative_r8_added_to_sp() {
         let mut motherboard = motherboard::Motherboard::new();
 
-        motherboard.registers.write_word(&RegWord::SP, 0x0010);
+        motherboard.registers.write_word(&RegWord::SP, 0x001F);
 
         execute_two_byte_opcode(&mut motherboard, TwoByteOpCode::ADD_SP_R8, 0xFF); // -1
 
-        assert_eq!(motherboard.registers.read_word(&RegWord::SP), 0x000F);
+        assert_eq!(motherboard.registers.read_word(&RegWord::SP), 0x001E);
 
         assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), false);
         assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), false);

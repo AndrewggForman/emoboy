@@ -1497,23 +1497,14 @@ pub fn execute_two_byte_opcode(
             bitwise_byte_and_a(motherboard, byte1);
             motherboard.clock.cycle_clock(2);
         }
+        // TODO: Need to double check this down the line. Something about flags not caring about it being signed addition?
         TwoByteOpCode::ADD_SP_R8 => {
             let signed_byte1: i8 = byte1 as i8;
             let current_sp = motherboard.registers.read_word(&RegWord::SP);
-            //let current_sp_low_byte = current_sp & 0xFF;
             let signed_sp: i16 = current_sp as i16;
-            let mut half_carry = false;
-            let mut carry = false;
-            let mut _result;
 
-            if signed_byte1 >= 0 {
-                half_carry = (((current_sp & 0xF) + (byte1 & 0xF) as u16) & 0x10) == 0x10;
-                let low_byte = current_sp.to_be_bytes()[1];
-                (_result, carry) = byte1.overflowing_add(low_byte);
-            } else {
-                half_carry = ((current_sp) & 0xF) < ((byte1 as u16) & 0xF);
-                carry = ((current_sp & 0xFF) < ((byte1 as u16) & 0xFF));
-            }
+            let half_carry = ((current_sp & 0xF) + (byte1 & 0xF) as u16) > 0xF;
+            let full_carry = ((current_sp & 0xFF) + (byte1 & 0xFF) as u16) > 0xFF;
 
             let new_sp = signed_sp.wrapping_add(signed_byte1.into());
 
@@ -1524,7 +1515,7 @@ pub fn execute_two_byte_opcode(
             motherboard
                 .registers
                 .write_flag(RegFlag::HalfCarry, half_carry);
-            motherboard.registers.write_flag(RegFlag::Carry, carry);
+            motherboard.registers.write_flag(RegFlag::Carry, full_carry);
             motherboard.registers.write_flag(RegFlag::Zero, false);
             motherboard
                 .registers
