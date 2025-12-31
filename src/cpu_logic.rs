@@ -1,110 +1,122 @@
 // use std::iter::Cycle;
 
 use crate::clock;
-use crate::cpu;
+use crate::motherboard;
 use crate::opcode::{OneByteOpCode, ThreeByteOpCode, TwoByteOpCode};
 use crate::registers::{RegByte, RegFlag, RegWord};
 
 // TODO: Add OpCodes. Refactor tests/build new ones. Implement clock cycles for each OpCode/fix clock cyles.
 // TODO: Increment Program Counter properly!!! Only stack related operations currently interact with program counter
 // TODO: Might need to fix ime related commands because they are supposed to go into effect: AFTER the NEXT instruction
-// TODO: !!!Rewrite with motherboard instead of cpu.!!!
+// TODO: !!!Rewrite with motherboard instead of motherboard.!!!
 
-pub fn execute_one_byte_opcode(cpu: &mut cpu::Cpu, code: OneByteOpCode) {
+pub fn execute_one_byte_opcode(motherboard: &mut motherboard::Motherboard, code: OneByteOpCode) {
     match code {
         // 0x
         OneByteOpCode::NOP => {
             // TODO:
             // CHECK LATER & ADD TESTS
-            cpu.clock.cycle_clock(1);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_BCcontents_A => {
-            let value = cpu.registers.read_byte(&RegByte::A);
-            load_byte_to_virtual_register_target(cpu, value, &RegWord::BC);
-            cpu.clock.cycle_clock(2);
+            let value = motherboard.registers.read_byte(&RegByte::A);
+            load_byte_to_virtual_register_target(motherboard, value, &RegWord::BC);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::INC_BC => {
-            increment_virtual_register_ignore_flags(cpu, &RegWord::BC);
+            increment_virtual_register_ignore_flags(motherboard, &RegWord::BC);
 
-            cpu.clock.cycle_clock(2);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::INC_B => {
-            increment_8bit_register(cpu, &RegByte::B);
-            cpu.clock.cycle_clock(1);
+            increment_8bit_register(motherboard, &RegByte::B);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::DEC_B => {
-            decrement_8bit_register(cpu, &RegByte::B);
-            cpu.clock.cycle_clock(1);
+            decrement_8bit_register(motherboard, &RegByte::B);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::RLCA => {
-            let byte = cpu.registers.read_byte(&RegByte::A);
+            let byte = motherboard.registers.read_byte(&RegByte::A);
             let bit_7: u8 = 0x80 & byte;
             let byte_rotated_left = byte.rotate_left(1);
 
-            cpu.registers.write_flag(RegFlag::Carry, bit_7 == 0x80);
-            cpu.registers.write_flag(RegFlag::HalfCarry, false);
-            cpu.registers.write_flag(RegFlag::Subtraction, false);
-            cpu.registers.write_flag(RegFlag::Zero, false);
-            cpu.registers.write_byte(&RegByte::A, byte_rotated_left);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Carry, bit_7 == 0x80);
+            motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Subtraction, false);
+            motherboard.registers.write_flag(RegFlag::Zero, false);
+            motherboard
+                .registers
+                .write_byte(&RegByte::A, byte_rotated_left);
 
-            cpu.clock.cycle_clock(1);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::ADD_HL_BC => {
-            add_virtual_register_from_virtual_register(cpu, &RegWord::HL, &RegWord::BC);
-            cpu.clock.cycle_clock(2);
+            add_virtual_register_from_virtual_register(motherboard, &RegWord::HL, &RegWord::BC);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::LD_A_BCcontents => {
-            load_8bit_register_from_virtual_register(cpu, &RegByte::A, &RegWord::BC);
-            cpu.clock.cycle_clock(2);
+            load_8bit_register_from_virtual_register(motherboard, &RegByte::A, &RegWord::BC);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::DEC_BC => {
-            decrement_virtual_register_ignore_flags(cpu, &RegWord::BC);
-            cpu.clock.cycle_clock(2);
+            decrement_virtual_register_ignore_flags(motherboard, &RegWord::BC);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::INC_C => {
-            increment_8bit_register(cpu, &RegByte::C);
-            cpu.clock.cycle_clock(1);
+            increment_8bit_register(motherboard, &RegByte::C);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::DEC_C => {
-            decrement_8bit_register(cpu, &RegByte::C);
-            cpu.clock.cycle_clock(1);
+            decrement_8bit_register(motherboard, &RegByte::C);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::RRCA => {
-            let byte = cpu.registers.read_byte(&RegByte::A);
+            let byte = motherboard.registers.read_byte(&RegByte::A);
             let bit_0: u8 = 0x01 & byte;
             let byte_rotated_right = byte.rotate_right(1);
 
-            cpu.registers.write_flag(RegFlag::Carry, bit_0 == 0x01);
-            cpu.registers.write_flag(RegFlag::HalfCarry, false);
-            cpu.registers.write_flag(RegFlag::Subtraction, false);
-            cpu.registers.write_flag(RegFlag::Zero, false);
-            cpu.registers.write_byte(&RegByte::A, byte_rotated_right);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Carry, bit_0 == 0x01);
+            motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Subtraction, false);
+            motherboard.registers.write_flag(RegFlag::Zero, false);
+            motherboard
+                .registers
+                .write_byte(&RegByte::A, byte_rotated_right);
 
-            cpu.clock.cycle_clock(1);
+            motherboard.clock.cycle_clock(1);
         }
 
         // 1x
         OneByteOpCode::LD_DEcontents_A => {
-            let value = cpu.registers.read_byte(&RegByte::A);
-            load_byte_to_virtual_register_target(cpu, value, &RegWord::DE);
-            cpu.clock.cycle_clock(2);
+            let value = motherboard.registers.read_byte(&RegByte::A);
+            load_byte_to_virtual_register_target(motherboard, value, &RegWord::DE);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::INC_DE => {
-            increment_virtual_register_ignore_flags(cpu, &RegWord::DE);
-            cpu.clock.cycle_clock(2);
+            increment_virtual_register_ignore_flags(motherboard, &RegWord::DE);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::INC_D => {
-            increment_8bit_register(cpu, &RegByte::D);
-            cpu.clock.cycle_clock(1);
+            increment_8bit_register(motherboard, &RegByte::D);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::DEC_D => {
-            decrement_8bit_register(cpu, &RegByte::D);
-            cpu.clock.cycle_clock(1);
+            decrement_8bit_register(motherboard, &RegByte::D);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::RLA => {
-            let byte = cpu.registers.read_byte(&RegByte::A);
+            let byte = motherboard.registers.read_byte(&RegByte::A);
             let bit_7: u8 = 0x80 & byte;
-            let carry_bit: u8 = if cpu.registers.read_flag(RegFlag::Carry) == true {
+            let carry_bit: u8 = if motherboard.registers.read_flag(RegFlag::Carry) == true {
                 1
             } else {
                 0
@@ -113,43 +125,49 @@ pub fn execute_one_byte_opcode(cpu: &mut cpu::Cpu, code: OneByteOpCode) {
             let byte_rotated_left = byte.rotate_left(1);
             let byte_rotated_left_through_carry = { carry_bit | (byte_rotated_left & 0xFE) };
 
-            cpu.registers.write_flag(RegFlag::Carry, bit_7 == 0x80);
-            cpu.registers.write_flag(RegFlag::HalfCarry, false);
-            cpu.registers.write_flag(RegFlag::Subtraction, false);
-            cpu.registers.write_flag(RegFlag::Zero, false);
-            cpu.registers
+            motherboard
+                .registers
+                .write_flag(RegFlag::Carry, bit_7 == 0x80);
+            motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Subtraction, false);
+            motherboard.registers.write_flag(RegFlag::Zero, false);
+            motherboard
+                .registers
                 .write_byte(&RegByte::A, byte_rotated_left_through_carry);
 
-            cpu.clock.cycle_clock(1);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::ADD_HL_DE => {
-            add_virtual_register_from_virtual_register(cpu, &RegWord::HL, &RegWord::DE);
-            cpu.clock.cycle_clock(2);
+            add_virtual_register_from_virtual_register(motherboard, &RegWord::HL, &RegWord::DE);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::LD_A_DEcontents => {
-            load_8bit_register_from_virtual_register(cpu, &RegByte::A, &RegWord::DE);
-            cpu.clock.cycle_clock(2);
+            load_8bit_register_from_virtual_register(motherboard, &RegByte::A, &RegWord::DE);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::DEC_DE => {
-            let value = cpu.registers.read_word(&RegWord::DE);
-            cpu.registers
+            let value = motherboard.registers.read_word(&RegWord::DE);
+            motherboard
+                .registers
                 .write_word(&RegWord::BC, value.wrapping_sub(1));
 
-            cpu.clock.cycle_clock(2);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::INC_E => {
-            increment_8bit_register(cpu, &RegByte::E);
-            cpu.clock.cycle_clock(1);
+            increment_8bit_register(motherboard, &RegByte::E);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::DEC_E => {
-            decrement_8bit_register(cpu, &RegByte::E);
-            cpu.clock.cycle_clock(1);
+            decrement_8bit_register(motherboard, &RegByte::E);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::RRA => {
-            let byte = cpu.registers.read_byte(&RegByte::A);
+            let byte = motherboard.registers.read_byte(&RegByte::A);
             let bit_0: u8 = 0x01 & byte;
             let bit_mask: u8;
-            let carry_bit: u8 = if cpu.registers.read_flag(RegFlag::Carry) == true {
+            let carry_bit: u8 = if motherboard.registers.read_flag(RegFlag::Carry) == true {
                 bit_mask = 0b1000_0000;
                 1
             } else {
@@ -161,455 +179,514 @@ pub fn execute_one_byte_opcode(cpu: &mut cpu::Cpu, code: OneByteOpCode) {
             let byte_rotated_right_through_carry =
                 { (byte_rotated_right & 0b0111_1111) | bit_mask };
 
-            cpu.registers.write_flag(RegFlag::Carry, bit_0 == 0x01);
-            cpu.registers.write_flag(RegFlag::HalfCarry, false);
-            cpu.registers.write_flag(RegFlag::Subtraction, false);
-            cpu.registers.write_flag(RegFlag::Zero, false);
-            cpu.registers
+            motherboard
+                .registers
+                .write_flag(RegFlag::Carry, bit_0 == 0x01);
+            motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Subtraction, false);
+            motherboard.registers.write_flag(RegFlag::Zero, false);
+            motherboard
+                .registers
                 .write_byte(&RegByte::A, byte_rotated_right_through_carry);
 
-            cpu.clock.cycle_clock(1);
+            motherboard.clock.cycle_clock(1);
         }
 
         // 2x
         OneByteOpCode::LD_HLincrementedcontents_A => {
-            let value = cpu.registers.read_byte(&RegByte::A);
-            load_byte_to_virtual_register_target(cpu, value, &RegWord::HL);
-            increment_virtual_register_ignore_flags(cpu, &RegWord::HL);
-            cpu.clock.cycle_clock(2);
+            let value = motherboard.registers.read_byte(&RegByte::A);
+            load_byte_to_virtual_register_target(motherboard, value, &RegWord::HL);
+            increment_virtual_register_ignore_flags(motherboard, &RegWord::HL);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::INC_HL => {
-            increment_virtual_register_ignore_flags(cpu, &RegWord::HL);
+            increment_virtual_register_ignore_flags(motherboard, &RegWord::HL);
 
-            cpu.clock.cycle_clock(2);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::INC_H => {
-            increment_8bit_register(cpu, &RegByte::H);
-            cpu.clock.cycle_clock(1);
+            increment_8bit_register(motherboard, &RegByte::H);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::DEC_H => {
-            decrement_8bit_register(cpu, &RegByte::H);
-            cpu.clock.cycle_clock(1);
+            decrement_8bit_register(motherboard, &RegByte::H);
+            motherboard.clock.cycle_clock(1);
         }
-        OneByteOpCode::DAA => match cpu.registers.read_flag(RegFlag::Subtraction) {
+        OneByteOpCode::DAA => match motherboard.registers.read_flag(RegFlag::Subtraction) {
             true => {
                 let mut adjustment: u8 = 0;
-                if cpu.registers.read_flag(RegFlag::HalfCarry) {
+                if motherboard.registers.read_flag(RegFlag::HalfCarry) {
                     adjustment += 0x06;
                 }
-                if cpu.registers.read_flag(RegFlag::Carry) {
+                if motherboard.registers.read_flag(RegFlag::Carry) {
                     adjustment += 0x60;
                 }
-                let result = cpu
+                let result = motherboard
                     .registers
                     .read_byte(&RegByte::A)
                     .wrapping_sub(adjustment);
                 let zero = result == 0;
 
-                cpu.registers.write_byte(&RegByte::A, result);
-                cpu.registers.write_flag(RegFlag::Zero, zero);
-                cpu.registers.write_flag(RegFlag::HalfCarry, false);
-                cpu.clock.cycle_clock(1);
+                motherboard.registers.write_byte(&RegByte::A, result);
+                motherboard.registers.write_flag(RegFlag::Zero, zero);
+                motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+                motherboard.clock.cycle_clock(1);
             }
             false => {
                 let mut adjustment: u8 = 0;
-                let a_byte = cpu.registers.read_byte(&RegByte::A);
+                let a_byte = motherboard.registers.read_byte(&RegByte::A);
                 let low_bit_mask: bool = (a_byte & 0x0f) > 0x09;
                 let high_bit_mask: bool = a_byte > 0x99;
-                if cpu.registers.read_flag(RegFlag::HalfCarry) || low_bit_mask {
+                if motherboard.registers.read_flag(RegFlag::HalfCarry) || low_bit_mask {
                     adjustment += 0x06;
                 }
-                if cpu.registers.read_flag(RegFlag::Carry) || high_bit_mask {
+                if motherboard.registers.read_flag(RegFlag::Carry) || high_bit_mask {
                     adjustment += 0x60;
-                    cpu.registers.write_flag(RegFlag::Carry, true);
+                    motherboard.registers.write_flag(RegFlag::Carry, true);
                 }
                 let result = a_byte.wrapping_add(adjustment);
                 let zero = result == 0;
 
-                cpu.registers.write_byte(&RegByte::A, result);
-                cpu.registers.write_flag(RegFlag::Zero, zero);
-                cpu.registers.write_flag(RegFlag::HalfCarry, false);
-                cpu.clock.cycle_clock(1);
+                motherboard.registers.write_byte(&RegByte::A, result);
+                motherboard.registers.write_flag(RegFlag::Zero, zero);
+                motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+                motherboard.clock.cycle_clock(1);
             }
         },
         OneByteOpCode::ADD_HL_HL => {
-            add_virtual_register_from_virtual_register(cpu, &RegWord::HL, &RegWord::HL);
-            cpu.clock.cycle_clock(2);
+            add_virtual_register_from_virtual_register(motherboard, &RegWord::HL, &RegWord::HL);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::LD_A_HLincrementedcontents => {
-            let value = get_byte_from_virtual_register(cpu, &RegWord::HL);
-            cpu.registers.write_byte(&RegByte::A, value);
-            increment_virtual_register_ignore_flags(cpu, &RegWord::HL);
-            cpu.clock.cycle_clock(2);
+            let value = get_byte_from_virtual_register(motherboard, &RegWord::HL);
+            motherboard.registers.write_byte(&RegByte::A, value);
+            increment_virtual_register_ignore_flags(motherboard, &RegWord::HL);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::DEC_HL => {
-            decrement_virtual_register_ignore_flags(cpu, &RegWord::HL);
-            cpu.clock.cycle_clock(2);
+            decrement_virtual_register_ignore_flags(motherboard, &RegWord::HL);
+            motherboard.clock.cycle_clock(2);
         }
 
         OneByteOpCode::INC_L => {
-            increment_8bit_register(cpu, &RegByte::L);
-            cpu.clock.cycle_clock(1);
+            increment_8bit_register(motherboard, &RegByte::L);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::DEC_L => {
-            decrement_8bit_register(cpu, &RegByte::L);
-            cpu.clock.cycle_clock(1);
+            decrement_8bit_register(motherboard, &RegByte::L);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::CPL => {
             // Complement Accumulator (bitwise not of A)
-            let value: u8 = !(get_byte_from_8bit_register(cpu, &RegByte::A));
-            cpu.registers.write_byte(&RegByte::A, value);
+            let value: u8 = !(get_byte_from_8bit_register(motherboard, &RegByte::A));
+            motherboard.registers.write_byte(&RegByte::A, value);
 
-            cpu.registers.write_flag(RegFlag::Subtraction, true);
-            cpu.registers.write_flag(RegFlag::HalfCarry, true);
-            cpu.clock.cycle_clock(1);
+            motherboard.registers.write_flag(RegFlag::Subtraction, true);
+            motherboard.registers.write_flag(RegFlag::HalfCarry, true);
+            motherboard.clock.cycle_clock(1);
         }
 
         // 3x
         OneByteOpCode::LD_HLdecrementedcontents_A => {
-            let value = cpu.registers.read_byte(&RegByte::A);
-            load_byte_to_virtual_register_target(cpu, value, &RegWord::HL);
-            decrement_virtual_register_ignore_flags(cpu, &RegWord::HL);
-            cpu.clock.cycle_clock(2);
+            let value = motherboard.registers.read_byte(&RegByte::A);
+            load_byte_to_virtual_register_target(motherboard, value, &RegWord::HL);
+            decrement_virtual_register_ignore_flags(motherboard, &RegWord::HL);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::INC_SP => {
-            increment_virtual_register_ignore_flags(cpu, &RegWord::SP);
-            cpu.clock.cycle_clock(2);
+            increment_virtual_register_ignore_flags(motherboard, &RegWord::SP);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::INC_HLcontents => {
             let (result, zero, half_carry) =
-                increment_8bit(get_byte_from_virtual_register(cpu, &RegWord::HL));
+                increment_8bit(get_byte_from_virtual_register(motherboard, &RegWord::HL));
 
-            cpu.registers.write_flag(RegFlag::Zero, zero);
-            cpu.registers.write_flag(RegFlag::HalfCarry, half_carry);
-            cpu.registers.write_flag(RegFlag::Subtraction, false);
-            load_byte_to_virtual_register_target(cpu, result, &RegWord::HL);
-            cpu.clock.cycle_clock(1);
+            motherboard.registers.write_flag(RegFlag::Zero, zero);
+            motherboard
+                .registers
+                .write_flag(RegFlag::HalfCarry, half_carry);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Subtraction, false);
+            load_byte_to_virtual_register_target(motherboard, result, &RegWord::HL);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::DEC_HLcontents => {
             let (result, zero, half_borrow) =
-                decrement_8bit(get_byte_from_virtual_register(cpu, &RegWord::HL));
+                decrement_8bit(get_byte_from_virtual_register(motherboard, &RegWord::HL));
 
-            cpu.registers.write_flag(RegFlag::Zero, zero);
-            cpu.registers.write_flag(RegFlag::HalfCarry, half_borrow);
-            cpu.registers.write_flag(RegFlag::Subtraction, true);
-            load_byte_to_virtual_register_target(cpu, result, &RegWord::HL);
-            cpu.clock.cycle_clock(1);
+            motherboard.registers.write_flag(RegFlag::Zero, zero);
+            motherboard
+                .registers
+                .write_flag(RegFlag::HalfCarry, half_borrow);
+            motherboard.registers.write_flag(RegFlag::Subtraction, true);
+            load_byte_to_virtual_register_target(motherboard, result, &RegWord::HL);
+            motherboard.clock.cycle_clock(1);
         }
         //TODO
         OneByteOpCode::SCF => {
-            cpu.registers.write_flag(RegFlag::Carry, true);
-            cpu.registers.write_flag(RegFlag::HalfCarry, false);
-            cpu.registers.write_flag(RegFlag::Subtraction, false);
-            cpu.clock.cycle_clock(1);
+            motherboard.registers.write_flag(RegFlag::Carry, true);
+            motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Subtraction, false);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::ADD_HL_SP => {
-            add_virtual_register_from_virtual_register(cpu, &RegWord::HL, &RegWord::SP);
-            cpu.clock.cycle_clock(2);
+            add_virtual_register_from_virtual_register(motherboard, &RegWord::HL, &RegWord::SP);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::LD_A_HLdecrementedcontents => {
-            let value = get_byte_from_virtual_register(cpu, &RegWord::HL);
-            cpu.registers.write_byte(&RegByte::A, value);
-            decrement_virtual_register_ignore_flags(cpu, &RegWord::HL);
-            cpu.clock.cycle_clock(2);
+            let value = get_byte_from_virtual_register(motherboard, &RegWord::HL);
+            motherboard.registers.write_byte(&RegByte::A, value);
+            decrement_virtual_register_ignore_flags(motherboard, &RegWord::HL);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::DEC_SP => {
-            decrement_virtual_register_ignore_flags(cpu, &RegWord::SP);
-            cpu.clock.cycle_clock(2);
+            decrement_virtual_register_ignore_flags(motherboard, &RegWord::SP);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::INC_A => {
-            increment_8bit_register(cpu, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            increment_8bit_register(motherboard, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::DEC_A => {
-            decrement_8bit_register(cpu, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            decrement_8bit_register(motherboard, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::CCF => {
             // Complement (inverse) of carry flag
-            cpu.registers
-                .write_flag(RegFlag::Carry, !(cpu.registers.read_flag(RegFlag::Carry)));
-            cpu.registers.write_flag(RegFlag::HalfCarry, false);
-            cpu.registers.write_flag(RegFlag::Subtraction, false);
-            cpu.clock.cycle_clock(1);
+            motherboard.registers.write_flag(
+                RegFlag::Carry,
+                !(motherboard.registers.read_flag(RegFlag::Carry)),
+            );
+            motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Subtraction, false);
+            motherboard.clock.cycle_clock(1);
         }
 
         // 4x
         OneByteOpCode::LD_B_B => {
-            cpu.registers
-                .write_byte(&RegByte::B, cpu.registers.read_byte(&RegByte::B));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::B, motherboard.registers.read_byte(&RegByte::B));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_B_C => {
-            cpu.registers
-                .write_byte(&RegByte::B, cpu.registers.read_byte(&RegByte::C));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::B, motherboard.registers.read_byte(&RegByte::C));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_B_D => {
-            cpu.registers
-                .write_byte(&RegByte::B, cpu.registers.read_byte(&RegByte::D));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::B, motherboard.registers.read_byte(&RegByte::D));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_B_E => {
-            cpu.registers
-                .write_byte(&RegByte::B, cpu.registers.read_byte(&RegByte::E));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::B, motherboard.registers.read_byte(&RegByte::E));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_B_H => {
-            cpu.registers
-                .write_byte(&RegByte::B, cpu.registers.read_byte(&RegByte::H));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::B, motherboard.registers.read_byte(&RegByte::H));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_B_L => {
-            cpu.registers
-                .write_byte(&RegByte::B, cpu.registers.read_byte(&RegByte::L));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::B, motherboard.registers.read_byte(&RegByte::L));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_B_HLcontents => {
-            let value: u8 = get_byte_from_virtual_register(cpu, &RegWord::HL);
-            cpu.registers.write_byte(&RegByte::B, value);
-            cpu.clock.cycle_clock(2);
+            let value: u8 = get_byte_from_virtual_register(motherboard, &RegWord::HL);
+            motherboard.registers.write_byte(&RegByte::B, value);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::LD_B_A => {
-            cpu.registers
-                .write_byte(&RegByte::C, cpu.registers.read_byte(&RegByte::A));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::B, motherboard.registers.read_byte(&RegByte::A));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_C_B => {
-            cpu.registers
-                .write_byte(&RegByte::C, cpu.registers.read_byte(&RegByte::B));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::C, motherboard.registers.read_byte(&RegByte::B));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_C_C => {
-            cpu.registers
-                .write_byte(&RegByte::C, cpu.registers.read_byte(&RegByte::C));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::C, motherboard.registers.read_byte(&RegByte::C));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_C_D => {
-            cpu.registers
-                .write_byte(&RegByte::C, cpu.registers.read_byte(&RegByte::D));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::C, motherboard.registers.read_byte(&RegByte::D));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_C_E => {
-            cpu.registers
-                .write_byte(&RegByte::C, cpu.registers.read_byte(&RegByte::E));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::C, motherboard.registers.read_byte(&RegByte::E));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_C_H => {
-            cpu.registers
-                .write_byte(&RegByte::C, cpu.registers.read_byte(&RegByte::H));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::C, motherboard.registers.read_byte(&RegByte::H));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_C_L => {
-            cpu.registers
-                .write_byte(&RegByte::C, cpu.registers.read_byte(&RegByte::L));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::C, motherboard.registers.read_byte(&RegByte::L));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_C_HLcontents => {
-            let value: u8 = get_byte_from_virtual_register(cpu, &RegWord::HL);
-            cpu.registers.write_byte(&RegByte::C, value);
-            cpu.clock.cycle_clock(2);
+            let value: u8 = get_byte_from_virtual_register(motherboard, &RegWord::HL);
+            motherboard.registers.write_byte(&RegByte::C, value);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::LD_C_A => {
-            cpu.registers
-                .write_byte(&RegByte::C, cpu.registers.read_byte(&RegByte::A));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::C, motherboard.registers.read_byte(&RegByte::A));
+            motherboard.clock.cycle_clock(1);
         }
 
         // 5x
         OneByteOpCode::LD_D_B => {
-            cpu.registers
-                .write_byte(&RegByte::D, cpu.registers.read_byte(&RegByte::B));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::D, motherboard.registers.read_byte(&RegByte::B));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_D_C => {
-            cpu.registers
-                .write_byte(&RegByte::D, cpu.registers.read_byte(&RegByte::C));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::D, motherboard.registers.read_byte(&RegByte::C));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_D_D => {
-            cpu.registers
-                .write_byte(&RegByte::D, cpu.registers.read_byte(&RegByte::D));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::D, motherboard.registers.read_byte(&RegByte::D));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_D_E => {
-            cpu.registers
-                .write_byte(&RegByte::D, cpu.registers.read_byte(&RegByte::E));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::D, motherboard.registers.read_byte(&RegByte::E));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_D_H => {
-            cpu.registers
-                .write_byte(&RegByte::D, cpu.registers.read_byte(&RegByte::H));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::D, motherboard.registers.read_byte(&RegByte::H));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_D_L => {
-            cpu.registers
-                .write_byte(&RegByte::D, cpu.registers.read_byte(&RegByte::A));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::D, motherboard.registers.read_byte(&RegByte::A));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_D_HLcontents => {
-            let value: u8 = get_byte_from_virtual_register(cpu, &RegWord::HL);
-            cpu.registers.write_byte(&RegByte::D, value);
-            cpu.clock.cycle_clock(2);
+            let value: u8 = get_byte_from_virtual_register(motherboard, &RegWord::HL);
+            motherboard.registers.write_byte(&RegByte::D, value);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::LD_D_A => {
-            cpu.registers
-                .write_byte(&RegByte::D, cpu.registers.read_byte(&RegByte::A));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::D, motherboard.registers.read_byte(&RegByte::A));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_E_B => {
-            cpu.registers
-                .write_byte(&RegByte::E, cpu.registers.read_byte(&RegByte::B));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::E, motherboard.registers.read_byte(&RegByte::B));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_E_C => {
-            cpu.registers
-                .write_byte(&RegByte::E, cpu.registers.read_byte(&RegByte::C));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::E, motherboard.registers.read_byte(&RegByte::C));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_E_D => {
-            cpu.registers
-                .write_byte(&RegByte::E, cpu.registers.read_byte(&RegByte::D));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::E, motherboard.registers.read_byte(&RegByte::D));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_E_E => {
-            cpu.registers
-                .write_byte(&RegByte::E, cpu.registers.read_byte(&RegByte::E));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::E, motherboard.registers.read_byte(&RegByte::E));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_E_H => {
-            cpu.registers
-                .write_byte(&RegByte::E, cpu.registers.read_byte(&RegByte::H));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::E, motherboard.registers.read_byte(&RegByte::H));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_E_L => {
-            cpu.registers
-                .write_byte(&RegByte::E, cpu.registers.read_byte(&RegByte::L));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::E, motherboard.registers.read_byte(&RegByte::L));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_E_HLcontents => {
-            let value: u8 = get_byte_from_virtual_register(cpu, &RegWord::HL);
-            cpu.registers.write_byte(&RegByte::E, value);
-            cpu.clock.cycle_clock(2);
+            let value: u8 = get_byte_from_virtual_register(motherboard, &RegWord::HL);
+            motherboard.registers.write_byte(&RegByte::E, value);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::LD_E_A => {
-            cpu.registers
-                .write_byte(&RegByte::E, cpu.registers.read_byte(&RegByte::A));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::E, motherboard.registers.read_byte(&RegByte::A));
+            motherboard.clock.cycle_clock(1);
         }
 
         // 6x
         OneByteOpCode::LD_H_B => {
-            cpu.registers
-                .write_byte(&RegByte::H, cpu.registers.read_byte(&RegByte::B));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::H, motherboard.registers.read_byte(&RegByte::B));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_H_C => {
-            cpu.registers
-                .write_byte(&RegByte::H, cpu.registers.read_byte(&RegByte::C));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::H, motherboard.registers.read_byte(&RegByte::C));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_H_D => {
-            cpu.registers
-                .write_byte(&RegByte::H, cpu.registers.read_byte(&RegByte::D));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::H, motherboard.registers.read_byte(&RegByte::D));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_H_E => {
-            cpu.registers
-                .write_byte(&RegByte::H, cpu.registers.read_byte(&RegByte::E));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::H, motherboard.registers.read_byte(&RegByte::E));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_H_H => {
-            cpu.registers
-                .write_byte(&RegByte::H, cpu.registers.read_byte(&RegByte::H));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::H, motherboard.registers.read_byte(&RegByte::H));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_H_L => {
-            cpu.registers
-                .write_byte(&RegByte::H, cpu.registers.read_byte(&RegByte::L));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::H, motherboard.registers.read_byte(&RegByte::L));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_H_HLcontents => {
-            let value: u8 = get_byte_from_virtual_register(cpu, &RegWord::HL);
-            cpu.registers.write_byte(&RegByte::H, value);
-            cpu.clock.cycle_clock(2);
+            let value: u8 = get_byte_from_virtual_register(motherboard, &RegWord::HL);
+            motherboard.registers.write_byte(&RegByte::H, value);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::LD_H_A => {
-            cpu.registers
-                .write_byte(&RegByte::H, cpu.registers.read_byte(&RegByte::A));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::H, motherboard.registers.read_byte(&RegByte::A));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_L_B => {
-            cpu.registers
-                .write_byte(&RegByte::L, cpu.registers.read_byte(&RegByte::B));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::L, motherboard.registers.read_byte(&RegByte::B));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_L_C => {
-            cpu.registers
-                .write_byte(&RegByte::L, cpu.registers.read_byte(&RegByte::C));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::L, motherboard.registers.read_byte(&RegByte::C));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_L_D => {
-            cpu.registers
-                .write_byte(&RegByte::L, cpu.registers.read_byte(&RegByte::D));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::L, motherboard.registers.read_byte(&RegByte::D));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_L_E => {
-            cpu.registers
-                .write_byte(&RegByte::L, cpu.registers.read_byte(&RegByte::E));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::L, motherboard.registers.read_byte(&RegByte::E));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_L_H => {
-            cpu.registers
-                .write_byte(&RegByte::L, cpu.registers.read_byte(&RegByte::H));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::L, motherboard.registers.read_byte(&RegByte::H));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_L_L => {
-            cpu.registers
-                .write_byte(&RegByte::L, cpu.registers.read_byte(&RegByte::L));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::L, motherboard.registers.read_byte(&RegByte::L));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_L_HLcontents => {
-            let value: u8 = get_byte_from_virtual_register(cpu, &RegWord::HL);
-            cpu.registers.write_byte(&RegByte::L, value);
-            cpu.clock.cycle_clock(2);
+            let value: u8 = get_byte_from_virtual_register(motherboard, &RegWord::HL);
+            motherboard.registers.write_byte(&RegByte::L, value);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::LD_L_A => {
-            cpu.registers
-                .write_byte(&RegByte::L, cpu.registers.read_byte(&RegByte::A));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::L, motherboard.registers.read_byte(&RegByte::A));
+            motherboard.clock.cycle_clock(1);
         }
 
         // 7x
         OneByteOpCode::LD_HLcontents_B => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::B);
-            load_byte_to_virtual_register_target(cpu, byte, &RegWord::HL);
-            cpu.clock.cycle_clock(2);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::B);
+            load_byte_to_virtual_register_target(motherboard, byte, &RegWord::HL);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::LD_HLcontents_C => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::C);
-            load_byte_to_virtual_register_target(cpu, byte, &RegWord::HL);
-            cpu.clock.cycle_clock(2);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::C);
+            load_byte_to_virtual_register_target(motherboard, byte, &RegWord::HL);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::LD_HLcontents_D => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::D);
-            load_byte_to_virtual_register_target(cpu, byte, &RegWord::HL);
-            cpu.clock.cycle_clock(2);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::D);
+            load_byte_to_virtual_register_target(motherboard, byte, &RegWord::HL);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::LD_HLcontents_E => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::E);
-            load_byte_to_virtual_register_target(cpu, byte, &RegWord::HL);
-            cpu.clock.cycle_clock(2);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::E);
+            load_byte_to_virtual_register_target(motherboard, byte, &RegWord::HL);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::LD_HLcontents_H => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::H);
-            load_byte_to_virtual_register_target(cpu, byte, &RegWord::HL);
-            cpu.clock.cycle_clock(2);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::H);
+            load_byte_to_virtual_register_target(motherboard, byte, &RegWord::HL);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::LD_HLcontents_L => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::L);
-            load_byte_to_virtual_register_target(cpu, byte, &RegWord::HL);
-            cpu.clock.cycle_clock(2);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::L);
+            load_byte_to_virtual_register_target(motherboard, byte, &RegWord::HL);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::HALT => {
             // TODO: Implement halt. Needs IME flag and state of pending interrupts ([IE] & [IF] status)
@@ -617,381 +694,388 @@ pub fn execute_one_byte_opcode(cpu: &mut cpu::Cpu, code: OneByteOpCode) {
             panic!("ERROR::Attempted to perform a HALT. Not yet implemented. ");
         }
         OneByteOpCode::LD_HLcontents_A => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::A);
-            load_byte_to_virtual_register_target(cpu, byte, &RegWord::HL);
-            cpu.clock.cycle_clock(2);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::A);
+            load_byte_to_virtual_register_target(motherboard, byte, &RegWord::HL);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::LD_A_B => {
-            cpu.registers
-                .write_byte(&RegByte::A, cpu.registers.read_byte(&RegByte::B));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::A, motherboard.registers.read_byte(&RegByte::B));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_A_C => {
-            cpu.registers
-                .write_byte(&RegByte::A, cpu.registers.read_byte(&RegByte::C));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::A, motherboard.registers.read_byte(&RegByte::C));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_A_D => {
-            cpu.registers
-                .write_byte(&RegByte::A, cpu.registers.read_byte(&RegByte::D));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::A, motherboard.registers.read_byte(&RegByte::D));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_A_E => {
-            cpu.registers
-                .write_byte(&RegByte::A, cpu.registers.read_byte(&RegByte::E));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::A, motherboard.registers.read_byte(&RegByte::E));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_A_H => {
-            cpu.registers
-                .write_byte(&RegByte::A, cpu.registers.read_byte(&RegByte::H));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::A, motherboard.registers.read_byte(&RegByte::H));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_A_L => {
-            cpu.registers
-                .write_byte(&RegByte::A, cpu.registers.read_byte(&RegByte::L));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::A, motherboard.registers.read_byte(&RegByte::L));
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::LD_A_HLcontents => {
-            let byte: u8 = get_byte_from_virtual_register(cpu, &RegWord::HL);
-            cpu.registers.write_byte(&RegByte::A, byte);
-            cpu.clock.cycle_clock(2);
+            let byte: u8 = get_byte_from_virtual_register(motherboard, &RegWord::HL);
+            motherboard.registers.write_byte(&RegByte::A, byte);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::LD_A_A => {
-            cpu.registers
-                .write_byte(&RegByte::A, cpu.registers.read_byte(&RegByte::A));
-            cpu.clock.cycle_clock(1);
+            motherboard
+                .registers
+                .write_byte(&RegByte::A, motherboard.registers.read_byte(&RegByte::A));
+            motherboard.clock.cycle_clock(1);
         }
 
         // 8x
         // add_byte_to8bit_register() also handles flag setting
         OneByteOpCode::ADD_A_B => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::B);
-            add_byte_to_8bit_register(cpu, byte, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::B);
+            add_byte_to_8bit_register(motherboard, byte, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::ADD_A_C => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::C);
-            add_byte_to_8bit_register(cpu, byte, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::C);
+            add_byte_to_8bit_register(motherboard, byte, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::ADD_A_D => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::D);
-            add_byte_to_8bit_register(cpu, byte, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::D);
+            add_byte_to_8bit_register(motherboard, byte, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::ADD_A_E => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::E);
-            add_byte_to_8bit_register(cpu, byte, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::E);
+            add_byte_to_8bit_register(motherboard, byte, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::ADD_A_H => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::H);
-            add_byte_to_8bit_register(cpu, byte, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::H);
+            add_byte_to_8bit_register(motherboard, byte, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::ADD_A_L => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::L);
-            add_byte_to_8bit_register(cpu, byte, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::L);
+            add_byte_to_8bit_register(motherboard, byte, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::ADD_A_HLcontents => {
-            let byte: u8 = get_byte_from_virtual_register(cpu, &RegWord::HL);
-            add_byte_to_8bit_register(cpu, byte, &RegByte::A);
-            cpu.clock.cycle_clock(2);
+            let byte: u8 = get_byte_from_virtual_register(motherboard, &RegWord::HL);
+            add_byte_to_8bit_register(motherboard, byte, &RegByte::A);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::ADD_A_A => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::A);
-            add_byte_to_8bit_register(cpu, byte, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::A);
+            add_byte_to_8bit_register(motherboard, byte, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::ADC_A_B => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::B);
-            add_byte_and_carry_to_8bit_register(cpu, byte, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::B);
+            add_byte_and_carry_to_8bit_register(motherboard, byte, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::ADC_A_C => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::C);
-            add_byte_and_carry_to_8bit_register(cpu, byte, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::C);
+            add_byte_and_carry_to_8bit_register(motherboard, byte, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::ADC_A_D => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::D);
-            add_byte_and_carry_to_8bit_register(cpu, byte, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::D);
+            add_byte_and_carry_to_8bit_register(motherboard, byte, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::ADC_A_E => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::E);
-            add_byte_and_carry_to_8bit_register(cpu, byte, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::E);
+            add_byte_and_carry_to_8bit_register(motherboard, byte, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::ADC_A_H => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::H);
-            add_byte_and_carry_to_8bit_register(cpu, byte, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::H);
+            add_byte_and_carry_to_8bit_register(motherboard, byte, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::ADC_A_L => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::L);
-            add_byte_and_carry_to_8bit_register(cpu, byte, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::L);
+            add_byte_and_carry_to_8bit_register(motherboard, byte, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::ADC_A_HLcontents => {
-            let byte: u8 = get_byte_from_virtual_register(cpu, &RegWord::HL);
-            add_byte_and_carry_to_8bit_register(cpu, byte, &RegByte::A);
-            cpu.clock.cycle_clock(2);
+            let byte: u8 = get_byte_from_virtual_register(motherboard, &RegWord::HL);
+            add_byte_and_carry_to_8bit_register(motherboard, byte, &RegByte::A);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::ADC_A_A => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::A);
-            add_byte_and_carry_to_8bit_register(cpu, byte, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::A);
+            add_byte_and_carry_to_8bit_register(motherboard, byte, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
 
         // 9x
         // subtract_byte_from_8bit_register() also handles setting flags
         OneByteOpCode::SUB_A_B => {
-            let subtrahend: u8 = get_byte_from_8bit_register(cpu, &RegByte::B);
-            subtract_byte_from_8bit_register(cpu, subtrahend, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let subtrahend: u8 = get_byte_from_8bit_register(motherboard, &RegByte::B);
+            subtract_byte_from_8bit_register(motherboard, subtrahend, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::SUB_A_C => {
-            let subtrahend: u8 = get_byte_from_8bit_register(cpu, &RegByte::C);
-            subtract_byte_from_8bit_register(cpu, subtrahend, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let subtrahend: u8 = get_byte_from_8bit_register(motherboard, &RegByte::C);
+            subtract_byte_from_8bit_register(motherboard, subtrahend, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::SUB_A_D => {
-            let subtrahend: u8 = get_byte_from_8bit_register(cpu, &RegByte::D);
-            subtract_byte_from_8bit_register(cpu, subtrahend, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let subtrahend: u8 = get_byte_from_8bit_register(motherboard, &RegByte::D);
+            subtract_byte_from_8bit_register(motherboard, subtrahend, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::SUB_A_E => {
-            let subtrahend: u8 = get_byte_from_8bit_register(cpu, &RegByte::E);
-            subtract_byte_from_8bit_register(cpu, subtrahend, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let subtrahend: u8 = get_byte_from_8bit_register(motherboard, &RegByte::E);
+            subtract_byte_from_8bit_register(motherboard, subtrahend, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::SUB_A_H => {
-            let subtrahend: u8 = get_byte_from_8bit_register(cpu, &RegByte::H);
-            subtract_byte_from_8bit_register(cpu, subtrahend, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let subtrahend: u8 = get_byte_from_8bit_register(motherboard, &RegByte::H);
+            subtract_byte_from_8bit_register(motherboard, subtrahend, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::SUB_A_L => {
-            let subtrahend: u8 = get_byte_from_8bit_register(cpu, &RegByte::L);
-            subtract_byte_from_8bit_register(cpu, subtrahend, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let subtrahend: u8 = get_byte_from_8bit_register(motherboard, &RegByte::L);
+            subtract_byte_from_8bit_register(motherboard, subtrahend, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::SUB_A_HLcontents => {
-            let subtrahend: u8 = get_byte_from_virtual_register(cpu, &RegWord::HL);
-            subtract_byte_from_8bit_register(cpu, subtrahend, &RegByte::A);
-            cpu.clock.cycle_clock(2);
+            let subtrahend: u8 = get_byte_from_virtual_register(motherboard, &RegWord::HL);
+            subtract_byte_from_8bit_register(motherboard, subtrahend, &RegByte::A);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::SUB_A_A => {
-            let subtrahend: u8 = get_byte_from_8bit_register(cpu, &RegByte::A);
-            subtract_byte_from_8bit_register(cpu, subtrahend, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let subtrahend: u8 = get_byte_from_8bit_register(motherboard, &RegByte::A);
+            subtract_byte_from_8bit_register(motherboard, subtrahend, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::SBC_A_B => {
-            let subtrahend: u8 = get_byte_from_8bit_register(cpu, &RegByte::B);
-            subtract_byte_and_carry_from_8bit_register(cpu, subtrahend, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let subtrahend: u8 = get_byte_from_8bit_register(motherboard, &RegByte::B);
+            subtract_byte_and_carry_from_8bit_register(motherboard, subtrahend, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::SBC_A_C => {
-            let subtrahend: u8 = get_byte_from_8bit_register(cpu, &RegByte::C);
-            subtract_byte_and_carry_from_8bit_register(cpu, subtrahend, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let subtrahend: u8 = get_byte_from_8bit_register(motherboard, &RegByte::C);
+            subtract_byte_and_carry_from_8bit_register(motherboard, subtrahend, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::SBC_A_D => {
-            let subtrahend: u8 = get_byte_from_8bit_register(cpu, &RegByte::D);
-            subtract_byte_and_carry_from_8bit_register(cpu, subtrahend, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let subtrahend: u8 = get_byte_from_8bit_register(motherboard, &RegByte::D);
+            subtract_byte_and_carry_from_8bit_register(motherboard, subtrahend, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::SBC_A_E => {
-            let subtrahend: u8 = get_byte_from_8bit_register(cpu, &RegByte::E);
-            subtract_byte_and_carry_from_8bit_register(cpu, subtrahend, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let subtrahend: u8 = get_byte_from_8bit_register(motherboard, &RegByte::E);
+            subtract_byte_and_carry_from_8bit_register(motherboard, subtrahend, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::SBC_A_H => {
-            let subtrahend: u8 = get_byte_from_8bit_register(cpu, &RegByte::H);
-            subtract_byte_and_carry_from_8bit_register(cpu, subtrahend, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let subtrahend: u8 = get_byte_from_8bit_register(motherboard, &RegByte::H);
+            subtract_byte_and_carry_from_8bit_register(motherboard, subtrahend, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::SBC_A_L => {
-            let subtrahend: u8 = get_byte_from_8bit_register(cpu, &RegByte::L);
-            subtract_byte_and_carry_from_8bit_register(cpu, subtrahend, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let subtrahend: u8 = get_byte_from_8bit_register(motherboard, &RegByte::L);
+            subtract_byte_and_carry_from_8bit_register(motherboard, subtrahend, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::SBC_A_HLcontents => {
-            let subtrahend: u8 = get_byte_from_virtual_register(cpu, &RegWord::HL);
-            subtract_byte_and_carry_from_8bit_register(cpu, subtrahend, &RegByte::A);
-            cpu.clock.cycle_clock(2);
+            let subtrahend: u8 = get_byte_from_virtual_register(motherboard, &RegWord::HL);
+            subtract_byte_and_carry_from_8bit_register(motherboard, subtrahend, &RegByte::A);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::SBC_A_A => {
-            let subtrahend: u8 = get_byte_from_8bit_register(cpu, &RegByte::A);
-            subtract_byte_and_carry_from_8bit_register(cpu, subtrahend, &RegByte::A);
-            cpu.clock.cycle_clock(1);
+            let subtrahend: u8 = get_byte_from_8bit_register(motherboard, &RegByte::A);
+            subtract_byte_and_carry_from_8bit_register(motherboard, subtrahend, &RegByte::A);
+            motherboard.clock.cycle_clock(1);
         }
 
         // Ax
         // bitwise_byte_and_a() also handles flag setting
         OneByteOpCode::AND_B => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::B);
-            bitwise_byte_and_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::B);
+            bitwise_byte_and_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::AND_C => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::C);
-            bitwise_byte_and_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::C);
+            bitwise_byte_and_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::AND_D => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::D);
-            bitwise_byte_and_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::D);
+            bitwise_byte_and_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::AND_E => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::E);
-            bitwise_byte_and_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::E);
+            bitwise_byte_and_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::AND_H => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::H);
-            bitwise_byte_and_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::H);
+            bitwise_byte_and_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::AND_L => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::L);
-            bitwise_byte_and_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::L);
+            bitwise_byte_and_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::AND_HLcontents => {
-            let byte: u8 = get_byte_from_virtual_register(cpu, &RegWord::HL);
-            bitwise_byte_and_a(cpu, byte);
-            cpu.clock.cycle_clock(2);
+            let byte: u8 = get_byte_from_virtual_register(motherboard, &RegWord::HL);
+            bitwise_byte_and_a(motherboard, byte);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::AND_A => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::A);
-            bitwise_byte_and_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::A);
+            bitwise_byte_and_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         // bitwise_byte_xor_a() also handles flag setting
         OneByteOpCode::XOR_B => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::B);
-            bitwise_byte_xor_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::B);
+            bitwise_byte_xor_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::XOR_C => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::C);
-            bitwise_byte_xor_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::C);
+            bitwise_byte_xor_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::XOR_D => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::D);
-            bitwise_byte_xor_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::D);
+            bitwise_byte_xor_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::XOR_E => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::E);
-            bitwise_byte_xor_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::E);
+            bitwise_byte_xor_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::XOR_H => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::H);
-            bitwise_byte_xor_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::H);
+            bitwise_byte_xor_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::XOR_L => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::L);
-            bitwise_byte_xor_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::L);
+            bitwise_byte_xor_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::XOR_HLcontents => {
-            let byte: u8 = get_byte_from_virtual_register(cpu, &RegWord::HL);
-            bitwise_byte_xor_a(cpu, byte);
-            cpu.clock.cycle_clock(2);
+            let byte: u8 = get_byte_from_virtual_register(motherboard, &RegWord::HL);
+            bitwise_byte_xor_a(motherboard, byte);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::XOR_A => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::A);
-            bitwise_byte_xor_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::A);
+            bitwise_byte_xor_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
 
         // Bx
         OneByteOpCode::OR_B => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::B);
-            bitwise_byte_or_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::B);
+            bitwise_byte_or_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::OR_C => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::C);
-            bitwise_byte_or_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::C);
+            bitwise_byte_or_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::OR_D => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::D);
-            bitwise_byte_or_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::D);
+            bitwise_byte_or_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::OR_E => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::E);
-            bitwise_byte_or_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::E);
+            bitwise_byte_or_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::OR_H => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::H);
-            bitwise_byte_or_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::H);
+            bitwise_byte_or_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::OR_L => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::L);
-            bitwise_byte_or_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::L);
+            bitwise_byte_or_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::OR_HLcontents => {
-            let byte: u8 = get_byte_from_virtual_register(cpu, &RegWord::HL);
-            bitwise_byte_or_a(cpu, byte);
-            cpu.clock.cycle_clock(2);
+            let byte: u8 = get_byte_from_virtual_register(motherboard, &RegWord::HL);
+            bitwise_byte_or_a(motherboard, byte);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::OR_A => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::A);
-            bitwise_byte_or_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::A);
+            bitwise_byte_or_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::CP_B => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::B);
-            compare_byte_to_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::B);
+            compare_byte_to_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::CP_C => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::C);
-            compare_byte_to_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::C);
+            compare_byte_to_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::CP_D => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::D);
-            compare_byte_to_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::D);
+            compare_byte_to_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::CP_E => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::E);
-            compare_byte_to_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::E);
+            compare_byte_to_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::CP_H => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::H);
-            compare_byte_to_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::H);
+            compare_byte_to_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::CP_L => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::L);
-            compare_byte_to_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::L);
+            compare_byte_to_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::CP_HLcontents => {
-            let byte: u8 = get_byte_from_virtual_register(cpu, &RegWord::HL);
-            compare_byte_to_a(cpu, byte);
-            cpu.clock.cycle_clock(2);
+            let byte: u8 = get_byte_from_virtual_register(motherboard, &RegWord::HL);
+            compare_byte_to_a(motherboard, byte);
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::CP_A => {
-            let byte: u8 = get_byte_from_8bit_register(cpu, &RegByte::A);
-            compare_byte_to_a(cpu, byte);
-            cpu.clock.cycle_clock(1);
+            let byte: u8 = get_byte_from_8bit_register(motherboard, &RegByte::A);
+            compare_byte_to_a(motherboard, byte);
+            motherboard.clock.cycle_clock(1);
         }
 
         // Cx
@@ -1002,246 +1086,263 @@ pub fn execute_one_byte_opcode(cpu: &mut cpu::Cpu, code: OneByteOpCode) {
         // z/nc/nz etc... info -> https://learn.cemetech.net/index.php?title=Z80:Opcodes:RET
         // other info -> https://rgbds.gbdev.io/docs/v1.0.0/gbz80.7#RET_cc
         OneByteOpCode::RET_NZ => {
-            if cpu.registers.read_flag(RegFlag::Zero) {
-                cpu.clock.cycle_clock(2);
+            if motherboard.registers.read_flag(RegFlag::Zero) {
+                motherboard.clock.cycle_clock(2);
                 return;
             }
 
-            return_call(cpu);
+            return_call(motherboard);
 
-            cpu.clock.cycle_clock(5);
+            motherboard.clock.cycle_clock(5);
         }
         OneByteOpCode::POP_BC => {
-            let low_byte: u8 = get_byte_from_stackpointer_dont_increment(cpu);
-            cpu.registers.increment_sp();
+            let low_byte: u8 = get_byte_from_stackpointer_dont_increment(motherboard);
+            motherboard.registers.increment_sp();
 
-            let high_byte: u8 = get_byte_from_stackpointer_dont_increment(cpu);
-            cpu.registers.increment_sp();
+            let high_byte: u8 = get_byte_from_stackpointer_dont_increment(motherboard);
+            motherboard.registers.increment_sp();
 
-            cpu.registers.write_byte(&RegByte::B, high_byte);
-            cpu.registers.write_byte(&RegByte::C, low_byte);
+            motherboard.registers.write_byte(&RegByte::B, high_byte);
+            motherboard.registers.write_byte(&RegByte::C, low_byte);
 
-            cpu.clock.cycle_clock(3);
+            motherboard.clock.cycle_clock(3);
         }
         OneByteOpCode::PUSH_BC => {
-            cpu.registers.decrement_sp();
+            motherboard.registers.decrement_sp();
             load_byte_to_virtual_register_target(
-                cpu,
-                cpu.registers.read_byte(&RegByte::B),
+                motherboard,
+                motherboard.registers.read_byte(&RegByte::B),
                 &RegWord::SP,
             );
 
-            cpu.registers.decrement_sp();
+            motherboard.registers.decrement_sp();
             load_byte_to_virtual_register_target(
-                cpu,
-                cpu.registers.read_byte(&RegByte::C),
+                motherboard,
+                motherboard.registers.read_byte(&RegByte::C),
                 &RegWord::SP,
             );
 
-            cpu.clock.cycle_clock(4);
+            motherboard.clock.cycle_clock(4);
         }
         OneByteOpCode::RST_00H => {
-            fast_reset_to_address(cpu, 0x0000);
+            fast_reset_to_address(motherboard, 0x0000);
 
-            cpu.clock.cycle_clock(4)
+            motherboard.clock.cycle_clock(4)
         }
         OneByteOpCode::RET_Z => {
-            if !cpu.registers.read_flag(RegFlag::Zero) {
-                cpu.clock.cycle_clock(2);
+            if !motherboard.registers.read_flag(RegFlag::Zero) {
+                motherboard.clock.cycle_clock(2);
                 return;
             }
 
-            return_call(cpu);
+            return_call(motherboard);
 
-            cpu.clock.cycle_clock(5);
+            motherboard.clock.cycle_clock(5);
         }
         OneByteOpCode::RET => {
-            return_call(cpu);
+            return_call(motherboard);
 
-            cpu.clock.cycle_clock(4);
+            motherboard.clock.cycle_clock(4);
         }
         OneByteOpCode::RST_08H => {
-            fast_reset_to_address(cpu, 0x0008);
+            fast_reset_to_address(motherboard, 0x0008);
 
-            cpu.clock.cycle_clock(4)
+            motherboard.clock.cycle_clock(4)
         }
 
         // Dx
         OneByteOpCode::RET_NC => {
-            if cpu.registers.read_flag(RegFlag::Carry) {
-                cpu.clock.cycle_clock(2);
+            if motherboard.registers.read_flag(RegFlag::Carry) {
+                motherboard.clock.cycle_clock(2);
                 return;
             }
 
-            return_call(cpu);
+            return_call(motherboard);
 
-            cpu.clock.cycle_clock(5);
+            motherboard.clock.cycle_clock(5);
         }
         OneByteOpCode::POP_DE => {
-            let low_byte: u8 = get_byte_from_stackpointer_dont_increment(cpu);
-            cpu.registers.increment_sp();
+            let low_byte: u8 = get_byte_from_stackpointer_dont_increment(motherboard);
+            motherboard.registers.increment_sp();
 
-            let high_byte: u8 = get_byte_from_stackpointer_dont_increment(cpu);
-            cpu.registers.increment_sp();
+            let high_byte: u8 = get_byte_from_stackpointer_dont_increment(motherboard);
+            motherboard.registers.increment_sp();
 
-            cpu.registers.write_byte(&RegByte::D, high_byte);
-            cpu.registers.write_byte(&RegByte::E, low_byte);
+            motherboard.registers.write_byte(&RegByte::D, high_byte);
+            motherboard.registers.write_byte(&RegByte::E, low_byte);
 
-            cpu.clock.cycle_clock(3);
+            motherboard.clock.cycle_clock(3);
         }
         OneByteOpCode::PUSH_DE => {
-            cpu.registers.decrement_sp();
+            motherboard.registers.decrement_sp();
             load_byte_to_virtual_register_target(
-                cpu,
-                cpu.registers.read_byte(&RegByte::D),
+                motherboard,
+                motherboard.registers.read_byte(&RegByte::D),
                 &RegWord::SP,
             );
 
-            cpu.registers.decrement_sp();
+            motherboard.registers.decrement_sp();
             load_byte_to_virtual_register_target(
-                cpu,
-                cpu.registers.read_byte(&RegByte::E),
+                motherboard,
+                motherboard.registers.read_byte(&RegByte::E),
                 &RegWord::SP,
             );
 
-            cpu.clock.cycle_clock(4);
+            motherboard.clock.cycle_clock(4);
         }
         OneByteOpCode::RST_10H => {
-            fast_reset_to_address(cpu, 0x0010);
+            fast_reset_to_address(motherboard, 0x0010);
 
-            cpu.clock.cycle_clock(4)
+            motherboard.clock.cycle_clock(4)
         }
         OneByteOpCode::RET_C => {
-            if !cpu.registers.read_flag(RegFlag::Carry) {
-                cpu.clock.cycle_clock(2);
+            if !motherboard.registers.read_flag(RegFlag::Carry) {
+                motherboard.clock.cycle_clock(2);
                 return;
             }
 
-            return_call(cpu);
+            return_call(motherboard);
 
-            cpu.clock.cycle_clock(5);
+            motherboard.clock.cycle_clock(5);
         }
         OneByteOpCode::RETI => {
-            return_call(cpu);
+            return_call(motherboard);
 
-            cpu.registers.write_ime(true);
+            motherboard.registers.write_ime(true);
 
-            cpu.clock.cycle_clock(4);
+            motherboard.clock.cycle_clock(4);
         }
         OneByteOpCode::RST_18H => {
-            fast_reset_to_address(cpu, 0x0018);
+            fast_reset_to_address(motherboard, 0x0018);
 
-            cpu.clock.cycle_clock(4)
+            motherboard.clock.cycle_clock(4)
         }
 
         // Ex
         OneByteOpCode::POP_HL => {
-            let low_byte: u8 = get_byte_from_stackpointer_dont_increment(cpu);
-            cpu.registers.increment_sp();
+            let low_byte: u8 = get_byte_from_stackpointer_dont_increment(motherboard);
+            motherboard.registers.increment_sp();
 
-            let high_byte: u8 = get_byte_from_stackpointer_dont_increment(cpu);
-            cpu.registers.increment_sp();
+            let high_byte: u8 = get_byte_from_stackpointer_dont_increment(motherboard);
+            motherboard.registers.increment_sp();
 
-            cpu.registers.write_byte(&RegByte::H, high_byte);
-            cpu.registers.write_byte(&RegByte::L, low_byte);
+            motherboard.registers.write_byte(&RegByte::H, high_byte);
+            motherboard.registers.write_byte(&RegByte::L, low_byte);
 
-            cpu.clock.cycle_clock(3);
+            motherboard.clock.cycle_clock(3);
         }
         OneByteOpCode::PUSH_HL => {
-            cpu.registers.decrement_sp();
+            motherboard.registers.decrement_sp();
             load_byte_to_virtual_register_target(
-                cpu,
-                cpu.registers.read_byte(&RegByte::H),
+                motherboard,
+                motherboard.registers.read_byte(&RegByte::H),
                 &RegWord::SP,
             );
 
-            cpu.registers.decrement_sp();
+            motherboard.registers.decrement_sp();
             load_byte_to_virtual_register_target(
-                cpu,
-                cpu.registers.read_byte(&RegByte::L),
+                motherboard,
+                motherboard.registers.read_byte(&RegByte::L),
                 &RegWord::SP,
             );
 
-            cpu.clock.cycle_clock(4);
+            motherboard.clock.cycle_clock(4);
         }
         OneByteOpCode::RST_20H => {
-            fast_reset_to_address(cpu, 0x0020);
+            fast_reset_to_address(motherboard, 0x0020);
 
-            cpu.clock.cycle_clock(4)
+            motherboard.clock.cycle_clock(4)
         }
         OneByteOpCode::JP_HLcontents => {
-            load_word_to_16bit_register(cpu, cpu.registers.read_word(&RegWord::HL), &RegWord::PC);
-            cpu.clock.cycle_clock(1);
+            load_word_to_16bit_register(
+                motherboard,
+                motherboard.registers.read_word(&RegWord::HL),
+                &RegWord::PC,
+            );
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::RST_28H => {
-            fast_reset_to_address(cpu, 0x0028);
+            fast_reset_to_address(motherboard, 0x0028);
 
-            cpu.clock.cycle_clock(4)
+            motherboard.clock.cycle_clock(4)
         }
 
         // Fx
         OneByteOpCode::POP_AF => {
-            let low_byte: u8 = get_byte_from_stackpointer_dont_increment(cpu);
-            cpu.registers.increment_sp();
+            let low_byte: u8 = get_byte_from_stackpointer_dont_increment(motherboard);
+            motherboard.registers.increment_sp();
 
-            let high_byte: u8 = get_byte_from_stackpointer_dont_increment(cpu);
-            cpu.registers.increment_sp();
+            let high_byte: u8 = get_byte_from_stackpointer_dont_increment(motherboard);
+            motherboard.registers.increment_sp();
 
-            cpu.registers.write_byte(&RegByte::A, high_byte);
-            cpu.registers.write_byte(&RegByte::F, low_byte);
+            motherboard.registers.write_byte(&RegByte::A, high_byte);
+            motherboard.registers.write_byte(&RegByte::F, low_byte);
 
-            cpu.clock.cycle_clock(3);
+            motherboard.clock.cycle_clock(3);
         }
         OneByteOpCode::DI => {
-            cpu.registers.write_ime(false);
-            cpu.clock.cycle_clock(1);
+            motherboard.registers.write_ime(false);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::PUSH_AF => {
-            cpu.registers.decrement_sp();
+            motherboard.registers.decrement_sp();
             load_byte_to_virtual_register_target(
-                cpu,
-                cpu.registers.read_byte(&RegByte::A),
+                motherboard,
+                motherboard.registers.read_byte(&RegByte::A),
                 &RegWord::SP,
             );
 
-            cpu.registers.decrement_sp();
+            motherboard.registers.decrement_sp();
             load_byte_to_virtual_register_target(
-                cpu,
-                cpu.registers.read_byte(&RegByte::F),
+                motherboard,
+                motherboard.registers.read_byte(&RegByte::F),
                 &RegWord::SP,
             );
 
-            cpu.clock.cycle_clock(4);
+            motherboard.clock.cycle_clock(4);
         }
         OneByteOpCode::RST_30H => {
-            fast_reset_to_address(cpu, 0x0030);
+            fast_reset_to_address(motherboard, 0x0030);
 
-            cpu.clock.cycle_clock(4)
+            motherboard.clock.cycle_clock(4)
         }
         OneByteOpCode::LD_SP_HL => {
-            load_word_to_16bit_register(cpu, cpu.registers.read_word(&RegWord::HL), &RegWord::SP);
-            cpu.clock.cycle_clock(2);
+            load_word_to_16bit_register(
+                motherboard,
+                motherboard.registers.read_word(&RegWord::HL),
+                &RegWord::SP,
+            );
+            motherboard.clock.cycle_clock(2);
         }
         OneByteOpCode::EI => {
-            cpu.registers.write_ime(true);
-            cpu.clock.cycle_clock(1);
+            motherboard.registers.write_ime(true);
+            motherboard.clock.cycle_clock(1);
         }
         OneByteOpCode::RST_38H => {
-            fast_reset_to_address(cpu, 0x0038);
+            fast_reset_to_address(motherboard, 0x0038);
 
-            cpu.clock.cycle_clock(4)
+            motherboard.clock.cycle_clock(4)
         }
         _ => panic!("ERROR::Invalid One Byte OpCode! Yoinked by Jaguar Claw!"),
     }
 }
 
-pub fn execute_two_byte_opcode(cpu: &mut cpu::Cpu, code: TwoByteOpCode, byte1: u8) {
+pub fn execute_two_byte_opcode(
+    motherboard: &mut motherboard::Motherboard,
+    code: TwoByteOpCode,
+    byte1: u8,
+) {
     match code {
         _ => panic!("ERROR::Invalid Two Byte OpCode! Yoinked by Lobster Claw!"),
     }
 }
 
-pub fn execute_three_byte_opcode(cpu: &mut cpu::Cpu, code: ThreeByteOpCode, byte1: u8, byte2: u8) {
+pub fn execute_three_byte_opcode(
+    motherboard: &mut motherboard::Motherboard,
+    code: ThreeByteOpCode,
+    byte1: u8,
+    byte2: u8,
+) {
     match code {
         _ => panic!("ERROR::Invalid Three Byte OpCode! Yoinked by Hawk Claw!"),
     }
@@ -1250,61 +1351,83 @@ pub fn execute_three_byte_opcode(cpu: &mut cpu::Cpu, code: ThreeByteOpCode, byte
 // Helper Functions
 // Load/Get Helper Functions
 pub fn load_byte_to_virtual_register_target(
-    cpu: &mut cpu::Cpu,
+    motherboard: &mut motherboard::Motherboard,
     byte: u8,
     virtual_register: &RegWord,
 ) {
-    let address = cpu.registers.read_word(virtual_register);
-    cpu.memory.write_byte(address, byte);
+    let address = motherboard.registers.read_word(virtual_register);
+    motherboard.memory.write_byte(address, byte);
 }
 
 pub fn load_8bit_register_from_virtual_register(
-    cpu: &mut cpu::Cpu,
+    motherboard: &mut motherboard::Motherboard,
     register: &RegByte,
     virtual_register: &RegWord,
 ) {
-    let value = cpu
+    let value = motherboard
         .memory
-        .read_byte(cpu.registers.read_word(virtual_register));
-    cpu.registers.write_byte(register, value);
+        .read_byte(motherboard.registers.read_word(virtual_register));
+    motherboard.registers.write_byte(register, value);
 }
 
-pub fn get_byte_from_virtual_register(cpu: &mut cpu::Cpu, virtual_register: &RegWord) -> u8 {
-    let value = cpu
+pub fn get_byte_from_virtual_register(
+    motherboard: &mut motherboard::Motherboard,
+    virtual_register: &RegWord,
+) -> u8 {
+    let value = motherboard
         .memory
-        .read_byte(cpu.registers.read_word(virtual_register));
+        .read_byte(motherboard.registers.read_word(virtual_register));
     return value;
 }
 
-pub fn get_byte_from_8bit_register(cpu: &mut cpu::Cpu, register: &RegByte) -> u8 {
-    return cpu.registers.read_byte(register);
+pub fn get_byte_from_8bit_register(
+    motherboard: &mut motherboard::Motherboard,
+    register: &RegByte,
+) -> u8 {
+    return motherboard.registers.read_byte(register);
 }
 
-pub fn get_word_from_16bit_register(cpu: &mut cpu::Cpu, register: &RegWord) -> u16 {
-    return cpu.registers.read_word(register);
+pub fn get_word_from_16bit_register(
+    motherboard: &mut motherboard::Motherboard,
+    register: &RegWord,
+) -> u16 {
+    return motherboard.registers.read_word(register);
 }
 
-pub fn load_word_to_16bit_register(cpu: &mut cpu::Cpu, word: u16, register: &RegWord) {
-    cpu.registers.write_word(register, word);
+pub fn load_word_to_16bit_register(
+    motherboard: &mut motherboard::Motherboard,
+    word: u16,
+    register: &RegWord,
+) {
+    motherboard.registers.write_word(register, word);
 }
 
-pub fn get_byte_from_stackpointer_dont_increment(cpu: &mut cpu::Cpu) -> u8 {
-    return cpu.memory.read_byte(cpu.registers.read_word(&RegWord::SP));
+pub fn get_byte_from_stackpointer_dont_increment(motherboard: &mut motherboard::Motherboard) -> u8 {
+    return motherboard
+        .memory
+        .read_byte(motherboard.registers.read_word(&RegWord::SP));
 }
 
-pub fn load_byte_into_stack_after_decrement_stack_pointer(cpu: &mut cpu::Cpu, byte: u8) {
-    decrement_virtual_register_ignore_flags(cpu, &RegWord::SP);
-    load_byte_to_virtual_register_target(cpu, byte, &RegWord::SP);
+pub fn load_byte_into_stack_after_decrement_stack_pointer(
+    motherboard: &mut motherboard::Motherboard,
+    byte: u8,
+) {
+    decrement_virtual_register_ignore_flags(motherboard, &RegWord::SP);
+    load_byte_to_virtual_register_target(motherboard, byte, &RegWord::SP);
 }
 
 // Increment Helper Functions
-pub fn increment_8bit_register(cpu: &mut cpu::Cpu, register: &RegByte) {
-    let value = cpu.registers.read_byte(register);
+pub fn increment_8bit_register(motherboard: &mut motherboard::Motherboard, register: &RegByte) {
+    let value = motherboard.registers.read_byte(register);
     let (result, zero, half_carry) = increment_8bit(value);
-    cpu.registers.write_flag(RegFlag::Zero, zero);
-    cpu.registers.write_flag(RegFlag::HalfCarry, half_carry);
-    cpu.registers.write_flag(RegFlag::Subtraction, false);
-    cpu.registers.write_byte(register, result);
+    motherboard.registers.write_flag(RegFlag::Zero, zero);
+    motherboard
+        .registers
+        .write_flag(RegFlag::HalfCarry, half_carry);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Subtraction, false);
+    motherboard.registers.write_byte(register, result);
 }
 
 pub fn increment_8bit(value: u8) -> (u8, bool, bool) {
@@ -1318,20 +1441,25 @@ pub fn increment_8bit(value: u8) -> (u8, bool, bool) {
     (result, zero, half_carry)
 }
 
-pub fn increment_virtual_register_ignore_flags(cpu: &mut cpu::Cpu, virtual_register: &RegWord) {
-    let value: u16 = cpu.registers.read_word(virtual_register);
+pub fn increment_virtual_register_ignore_flags(
+    motherboard: &mut motherboard::Motherboard,
+    virtual_register: &RegWord,
+) {
+    let value: u16 = motherboard.registers.read_word(virtual_register);
     let result: u16 = value.wrapping_add(1);
-    cpu.registers.write_word(virtual_register, result);
+    motherboard.registers.write_word(virtual_register, result);
 }
 
 //Decrement Helper Functions
-pub fn decrement_8bit_register(cpu: &mut cpu::Cpu, register: &RegByte) {
-    let value = cpu.registers.read_byte(register);
+pub fn decrement_8bit_register(motherboard: &mut motherboard::Motherboard, register: &RegByte) {
+    let value = motherboard.registers.read_byte(register);
     let (result, zero, half_borrow) = decrement_8bit(value);
-    cpu.registers.write_flag(RegFlag::Zero, zero);
-    cpu.registers.write_flag(RegFlag::HalfCarry, half_borrow);
-    cpu.registers.write_flag(RegFlag::Subtraction, true);
-    cpu.registers.write_byte(register, result);
+    motherboard.registers.write_flag(RegFlag::Zero, zero);
+    motherboard
+        .registers
+        .write_flag(RegFlag::HalfCarry, half_borrow);
+    motherboard.registers.write_flag(RegFlag::Subtraction, true);
+    motherboard.registers.write_byte(register, result);
 }
 
 pub fn decrement_8bit(value: u8) -> (u8, bool, bool) {
@@ -1345,28 +1473,35 @@ pub fn decrement_8bit(value: u8) -> (u8, bool, bool) {
     (result, zero, is_half_borrow)
 }
 
-pub fn decrement_virtual_register_ignore_flags(cpu: &mut cpu::Cpu, virtual_register: &RegWord) {
-    let value: u16 = cpu.registers.read_word(virtual_register);
+pub fn decrement_virtual_register_ignore_flags(
+    motherboard: &mut motherboard::Motherboard,
+    virtual_register: &RegWord,
+) {
+    let value: u16 = motherboard.registers.read_word(virtual_register);
     let result: u16 = value.wrapping_sub(1);
-    cpu.registers.write_word(virtual_register, result);
+    motherboard.registers.write_word(virtual_register, result);
 }
 
 // Add Helper Functions
 pub fn add_virtual_register_from_virtual_register(
-    cpu: &mut cpu::Cpu,
+    motherboard: &mut motherboard::Motherboard,
     receiver: &RegWord,
     sender: &RegWord,
 ) {
     // TODO: Maybe look over later, seems fine
-    let receiver_value = cpu.registers.read_word(receiver);
-    let sender_value = cpu.registers.read_word(&sender);
+    let receiver_value = motherboard.registers.read_word(receiver);
+    let sender_value = motherboard.registers.read_word(&sender);
     let (result, half_carry, carry) = add_16bit_and_16bit(receiver_value, sender_value);
 
-    cpu.registers.write_flag(RegFlag::Subtraction, false);
-    cpu.registers.write_flag(RegFlag::HalfCarry, half_carry);
-    cpu.registers.write_flag(RegFlag::Carry, carry);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Subtraction, false);
+    motherboard
+        .registers
+        .write_flag(RegFlag::HalfCarry, half_carry);
+    motherboard.registers.write_flag(RegFlag::Carry, carry);
 
-    cpu.registers.write_word(receiver, result);
+    motherboard.registers.write_word(receiver, result);
 }
 
 fn add_16bit_and_16bit(num1: u16, num2: u16) -> (u16, bool, bool) {
@@ -1378,28 +1513,40 @@ fn add_16bit_and_16bit(num1: u16, num2: u16) -> (u16, bool, bool) {
     (result, is_half_carry, is_carry)
 }
 
-pub fn add_byte_to_8bit_register(cpu: &mut cpu::Cpu, new_value: u8, register: &RegByte) {
-    let initial_value = cpu.registers.read_byte(register);
+pub fn add_byte_to_8bit_register(
+    motherboard: &mut motherboard::Motherboard,
+    new_value: u8,
+    register: &RegByte,
+) {
+    let initial_value = motherboard.registers.read_byte(register);
     let (result, carry) = initial_value.overflowing_add(new_value);
 
     // check if we would have initial_value
     let half_carry = calculate_8bit_half_carry(initial_value, new_value);
 
-    cpu.registers.write_flag(RegFlag::Zero, result == 0);
-    cpu.registers.write_flag(RegFlag::Subtraction, false);
-    cpu.registers.write_flag(RegFlag::HalfCarry, half_carry);
-    cpu.registers.write_flag(RegFlag::Carry, carry);
+    motherboard.registers.write_flag(RegFlag::Zero, result == 0);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Subtraction, false);
+    motherboard
+        .registers
+        .write_flag(RegFlag::HalfCarry, half_carry);
+    motherboard.registers.write_flag(RegFlag::Carry, carry);
 
-    cpu.registers.write_byte(register, result);
+    motherboard.registers.write_byte(register, result);
 }
 
-pub fn add_byte_and_carry_to_8bit_register(cpu: &mut cpu::Cpu, new_value: u8, register: &RegByte) {
-    if !cpu.registers.read_flag(RegFlag::Carry) {
-        add_byte_to_8bit_register(cpu, new_value, register);
+pub fn add_byte_and_carry_to_8bit_register(
+    motherboard: &mut motherboard::Motherboard,
+    new_value: u8,
+    register: &RegByte,
+) {
+    if !motherboard.registers.read_flag(RegFlag::Carry) {
+        add_byte_to_8bit_register(motherboard, new_value, register);
         return;
     }
 
-    let initial_value = cpu.registers.read_byte(register);
+    let initial_value = motherboard.registers.read_byte(register);
     let (result, is_overflow) = initial_value.overflowing_add(new_value);
 
     // Check for half carry between A + B, then result + carry
@@ -1408,55 +1555,69 @@ pub fn add_byte_and_carry_to_8bit_register(cpu: &mut cpu::Cpu, new_value: u8, re
 
     let (result2, is_overflow2) = result.overflowing_add(1);
 
-    cpu.registers.write_flag(RegFlag::Zero, result2 == 0);
-    cpu.registers.write_flag(RegFlag::Subtraction, false);
-    cpu.registers
+    motherboard
+        .registers
+        .write_flag(RegFlag::Zero, result2 == 0);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Subtraction, false);
+    motherboard
+        .registers
         .write_flag(RegFlag::HalfCarry, half_carry | half_carry2);
-    cpu.registers
+    motherboard
+        .registers
         .write_flag(RegFlag::Carry, is_overflow | is_overflow2);
 
-    cpu.registers.write_byte(register, result2);
+    motherboard.registers.write_byte(register, result2);
 }
 
 // Subtract Helper Functions
-pub fn subtract_byte_from_8bit_register(cpu: &mut cpu::Cpu, subtrahend: u8, register: &RegByte) {
-    let initial_value = cpu.registers.read_byte(register);
+pub fn subtract_byte_from_8bit_register(
+    motherboard: &mut motherboard::Motherboard,
+    subtrahend: u8,
+    register: &RegByte,
+) {
+    let initial_value = motherboard.registers.read_byte(register);
     let (result, borrow) = initial_value.overflowing_sub(subtrahend);
 
     // check if we would have to borrow from the 5th bit
     let half_borrow = (initial_value & 0xF) < (subtrahend & 0xF);
 
-    cpu.registers.write_flag(RegFlag::Zero, result == 0);
-    cpu.registers.write_flag(RegFlag::Subtraction, true);
-    cpu.registers.write_flag(RegFlag::HalfCarry, half_borrow);
-    cpu.registers.write_flag(RegFlag::Carry, borrow);
+    motherboard.registers.write_flag(RegFlag::Zero, result == 0);
+    motherboard.registers.write_flag(RegFlag::Subtraction, true);
+    motherboard
+        .registers
+        .write_flag(RegFlag::HalfCarry, half_borrow);
+    motherboard.registers.write_flag(RegFlag::Carry, borrow);
 
-    cpu.registers.write_byte(register, result);
+    motherboard.registers.write_byte(register, result);
 }
 
 pub fn subtract_byte_and_carry_from_8bit_register(
-    cpu: &mut cpu::Cpu,
+    motherboard: &mut motherboard::Motherboard,
     subtrahend: u8,
     register: &RegByte,
 ) {
-    if !cpu.registers.read_flag(RegFlag::Carry) {
-        subtract_byte_from_8bit_register(cpu, subtrahend, register);
+    if !motherboard.registers.read_flag(RegFlag::Carry) {
+        subtract_byte_from_8bit_register(motherboard, subtrahend, register);
         return;
     }
 
-    let initial_value = cpu.registers.read_byte(&RegByte::A);
+    let initial_value = motherboard.registers.read_byte(&RegByte::A);
     let result = initial_value.wrapping_sub(subtrahend).wrapping_sub(1);
 
     // check if we would have to borrow from the 5th bit
     let is_half_borrow = (initial_value & 0xF) < ((subtrahend & 0xF) + 1);
     let is_borrow = subtrahend == 0xFF || initial_value < (subtrahend + 1);
 
-    cpu.registers.write_flag(RegFlag::Zero, result == 0);
-    cpu.registers.write_flag(RegFlag::Subtraction, true);
-    cpu.registers.write_flag(RegFlag::HalfCarry, is_half_borrow);
-    cpu.registers.write_flag(RegFlag::Carry, is_borrow);
+    motherboard.registers.write_flag(RegFlag::Zero, result == 0);
+    motherboard.registers.write_flag(RegFlag::Subtraction, true);
+    motherboard
+        .registers
+        .write_flag(RegFlag::HalfCarry, is_half_borrow);
+    motherboard.registers.write_flag(RegFlag::Carry, is_borrow);
 
-    cpu.registers.write_byte(register, result);
+    motherboard.registers.write_byte(register, result);
 }
 
 // Calculate Helper Functions
@@ -1472,53 +1633,61 @@ pub fn calculate_16bit_half_carry(word1: u16, word2: u16) -> bool {
 
 // Logical Helper Functions
 // (Typically A is the targeted register implicitly)
-pub fn bitwise_byte_and_a(cpu: &mut cpu::Cpu, value: u8) {
-    let a_value = cpu.registers.read_byte(&RegByte::A);
+pub fn bitwise_byte_and_a(motherboard: &mut motherboard::Motherboard, value: u8) {
+    let a_value = motherboard.registers.read_byte(&RegByte::A);
     let result = a_value & value;
 
-    cpu.registers.write_flag(RegFlag::Zero, result == 0);
-    cpu.registers.write_flag(RegFlag::Subtraction, false);
-    cpu.registers.write_flag(RegFlag::HalfCarry, true);
-    cpu.registers.write_flag(RegFlag::Carry, false);
+    motherboard.registers.write_flag(RegFlag::Zero, result == 0);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Subtraction, false);
+    motherboard.registers.write_flag(RegFlag::HalfCarry, true);
+    motherboard.registers.write_flag(RegFlag::Carry, false);
 
-    cpu.registers.write_byte(&RegByte::A, result);
+    motherboard.registers.write_byte(&RegByte::A, result);
 }
 
-pub fn bitwise_byte_xor_a(cpu: &mut cpu::Cpu, value: u8) {
-    let a_value = cpu.registers.read_byte(&RegByte::A);
+pub fn bitwise_byte_xor_a(motherboard: &mut motherboard::Motherboard, value: u8) {
+    let a_value = motherboard.registers.read_byte(&RegByte::A);
     let result = a_value ^ value;
 
-    cpu.registers.write_flag(RegFlag::Zero, result == 0);
-    cpu.registers.write_flag(RegFlag::Subtraction, false);
-    cpu.registers.write_flag(RegFlag::HalfCarry, false);
-    cpu.registers.write_flag(RegFlag::Carry, false);
+    motherboard.registers.write_flag(RegFlag::Zero, result == 0);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Subtraction, false);
+    motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+    motherboard.registers.write_flag(RegFlag::Carry, false);
 
-    cpu.registers.write_byte(&RegByte::A, result);
+    motherboard.registers.write_byte(&RegByte::A, result);
 }
 
-pub fn bitwise_byte_or_a(cpu: &mut cpu::Cpu, value: u8) {
-    let a_value = cpu.registers.read_byte(&RegByte::A);
+pub fn bitwise_byte_or_a(motherboard: &mut motherboard::Motherboard, value: u8) {
+    let a_value = motherboard.registers.read_byte(&RegByte::A);
     let result = a_value | value;
 
-    cpu.registers.write_flag(RegFlag::Zero, result == 0);
-    cpu.registers.write_flag(RegFlag::Subtraction, false);
-    cpu.registers.write_flag(RegFlag::HalfCarry, false);
-    cpu.registers.write_flag(RegFlag::Carry, false);
+    motherboard.registers.write_flag(RegFlag::Zero, result == 0);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Subtraction, false);
+    motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+    motherboard.registers.write_flag(RegFlag::Carry, false);
 
-    cpu.registers.write_byte(&RegByte::A, result);
+    motherboard.registers.write_byte(&RegByte::A, result);
 }
 
-pub fn compare_byte_to_a(cpu: &mut cpu::Cpu, value: u8) {
-    let a_value = cpu.registers.read_byte(&RegByte::A);
+pub fn compare_byte_to_a(motherboard: &mut motherboard::Motherboard, value: u8) {
+    let a_value = motherboard.registers.read_byte(&RegByte::A);
     let (result, is_borrow) = a_value.overflowing_sub(value);
 
     // check if we would have to borrow from the 5th bit
     let is_half_borrow = (a_value & 0xF) < (value & 0xF);
 
-    cpu.registers.write_flag(RegFlag::Zero, result == 0);
-    cpu.registers.write_flag(RegFlag::Subtraction, true);
-    cpu.registers.write_flag(RegFlag::HalfCarry, is_half_borrow);
-    cpu.registers.write_flag(RegFlag::Carry, is_borrow);
+    motherboard.registers.write_flag(RegFlag::Zero, result == 0);
+    motherboard.registers.write_flag(RegFlag::Subtraction, true);
+    motherboard
+        .registers
+        .write_flag(RegFlag::HalfCarry, is_half_borrow);
+    motherboard.registers.write_flag(RegFlag::Carry, is_borrow);
 }
 
 // Building helper function for words from bytes (16bit stuff made up of 2 8bit pieces)
@@ -1533,12 +1702,12 @@ pub fn get_word_from_high_and_low_byte(high_byte: u8, low_byte: u8) -> u16 {
 }
 
 // Stack Related Helper Functions
-pub fn return_call(cpu: &mut cpu::Cpu) {
-    let low_word: u16 = get_byte_from_stackpointer_dont_increment(cpu).into();
-    cpu.registers.increment_sp();
+pub fn return_call(motherboard: &mut motherboard::Motherboard) {
+    let low_word: u16 = get_byte_from_stackpointer_dont_increment(motherboard).into();
+    motherboard.registers.increment_sp();
 
-    let mut high_word: u16 = get_byte_from_stackpointer_dont_increment(cpu).into();
-    cpu.registers.increment_sp();
+    let mut high_word: u16 = get_byte_from_stackpointer_dont_increment(motherboard).into();
+    motherboard.registers.increment_sp();
 
     // 0x00FF becomes -> 0xFF00
     high_word = high_word << 8;
@@ -1546,18 +1715,18 @@ pub fn return_call(cpu: &mut cpu::Cpu) {
     // 0xFF00 & 0x00AB becomes -> 0xFFAB
     let full_word = high_word | low_word;
 
-    cpu.registers.write_word(&RegWord::PC, full_word);
+    motherboard.registers.write_word(&RegWord::PC, full_word);
 }
 
-pub fn fast_reset_to_address(cpu: &mut cpu::Cpu, address: u16) {
-    cpu.registers.increment_pc();
+pub fn fast_reset_to_address(motherboard: &mut motherboard::Motherboard, address: u16) {
+    motherboard.registers.increment_pc();
 
-    let [msb, lsb] = cpu.registers.read_word(&RegWord::PC).to_be_bytes();
+    let [msb, lsb] = motherboard.registers.read_word(&RegWord::PC).to_be_bytes();
 
     // Load High then Low Byte into stack
-    load_byte_into_stack_after_decrement_stack_pointer(cpu, msb);
-    load_byte_into_stack_after_decrement_stack_pointer(cpu, lsb);
+    load_byte_into_stack_after_decrement_stack_pointer(motherboard, msb);
+    load_byte_into_stack_after_decrement_stack_pointer(motherboard, lsb);
 
     // Fast Jump (aka reset) to PC == 0x0008
-    load_word_to_16bit_register(cpu, address, &RegWord::PC);
+    load_word_to_16bit_register(motherboard, address, &RegWord::PC);
 }

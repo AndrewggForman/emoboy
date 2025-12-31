@@ -6,13 +6,13 @@ use crate::{
     registers::{RegWord, Registers},
 };
 
-// TODO: Remove all mentions of andy test rom OR create new rom
+// TODO: Do we just scrap the CPU struct? Talk w/ Yomt maybe. Everything our CPU was really a piece of the motherboard.
 
 pub struct Cpu {
-    pub registers: Registers,
-    pub memory: Memory, // TODO-Talk with tint, was memory supposed to be private? I don't know how else to access it in op-codes to do HL commands
-    pub clock: Clock,
-    gpu: Gpu,
+    //pub registers: Registers,
+    // pub memory: Memory, // TODO-Talk with tint, was memory supposed to be private? I don't know how else to access it in op-codes to do HL commands
+    // pub clock: Clock,
+    // gpu: Gpu,
     // sound
     // timers
     // inputs
@@ -30,52 +30,10 @@ pub struct Cpu {
 impl Cpu {
     pub fn new() -> Self {
         Self {
-            registers: Registers::new(),
-            memory: Memory::new(),
-            clock: Clock::new(),
-            gpu: Gpu::new(),
+            //registers: Registers::new(),
+            // memory: Memory::new(),
+            // clock: Clock::new(),
+            // gpu: Gpu::new(),
         }
     }
-
-    pub fn fetch_next_byte(&mut self, cartridge: &Cartridge) -> u8 {
-        let next_byte = cartridge.bytes[self.registers.read_word(&RegWord::PC) as usize];
-        self.registers.increment_pc();
-        next_byte
-    }
-
-    pub fn load_rom_file(&mut self, file_path: &str) {
-        self.memory.load_rom_file(file_path);
-    }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use crate::{
-//         cartridge,
-//         opcode::{OpCode, execute_opcode},
-//         registers::RegFlag,
-//     };
-
-//     use super::*;
-
-//     #[test]
-//     pub fn basic_fetch_test() {
-//         let mut cpu = Cpu::new();
-//         cpu.load_rom_file("assets/andy_test_rom.bin");
-
-//         let mut cart = Cartridge::new();
-//         cart.load_rom_file("assets/andy_test_rom.bin");
-
-//         assert_eq!(cpu.registers.read_word(&RegWord::PC), 0);
-//         assert_eq!(cpu.registers.read_flag(RegFlag::Carry), false);
-//         assert_eq!(cpu.registers.read_flag(RegFlag::HalfCarry), false);
-//         assert_eq!(cpu.registers.read_flag(RegFlag::Subtraction), false);
-//         assert_eq!(cpu.registers.read_flag(RegFlag::Zero), false);
-
-//         // TODO: - fix/figure out opcodes memes.
-//         // TODO: FIX
-//         //let mut curr_opcode: OpCode = cpu.fetch_next_byte(&cart); SUPER TODO: ???????
-
-//         //execute_opcode(&mut cpu, curr_opcode);
-//     }
-// }
