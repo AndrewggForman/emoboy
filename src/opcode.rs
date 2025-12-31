@@ -211,12 +211,14 @@ impl From<u8> for OneByteOpCode {
             0xDF => OneByteOpCode::RST_18H,
             // Ex
             0xE1 => OneByteOpCode::POP_HL,
+            0xE2 => OneByteOpCode::LD_Ccontents_A,
             0xE5 => OneByteOpCode::PUSH_HL,
             0xE7 => OneByteOpCode::RST_20H,
             0xE9 => OneByteOpCode::JP_HLcontents,
             0xEF => OneByteOpCode::RST_28H,
             // Fx
             0xF1 => OneByteOpCode::POP_AF,
+            0xF2 => OneByteOpCode::LD_A_Ccontents,
             0xF3 => OneByteOpCode::DI,
             0xF5 => OneByteOpCode::PUSH_AF,
             0xF7 => OneByteOpCode::RST_30H,
@@ -448,13 +450,17 @@ pub enum OneByteOpCode {
 
     // Ex
     POP_HL = 0xE1,
+    LD_Ccontents_A = 0xE2,
+
     PUSH_HL = 0xE5,
     RST_20H = 0xE7,
     JP_HLcontents = 0xE9,
+
     RST_28H = 0xEF,
 
     // Fx
     POP_AF = 0xF1,
+    LD_A_Ccontents = 0xF2,
     DI = 0xF3,
     PUSH_AF = 0xF5,
     RST_30H = 0xF7,
@@ -463,52 +469,128 @@ pub enum OneByteOpCode {
     RST_38H = 0xFF,
 }
 
+impl From<u8> for TwoByteOpCode {
+    fn from(code: u8) -> Self {
+        match code {
+            // 0x
+            0x06 => TwoByteOpCode::LD_B_N8,
+            0x0E => TwoByteOpCode::LD_C_N8,
+            // 1x
+            0x10 => TwoByteOpCode::STOP,
+            0x16 => TwoByteOpCode::LD_D_N8,
+            0x18 => TwoByteOpCode::JR_R8,
+            0x1E => TwoByteOpCode::LD_E_N8,
+            // 2x
+            0x20 => TwoByteOpCode::JR_NZ_R8,
+            0x26 => TwoByteOpCode::LD_H_N8,
+            0x28 => TwoByteOpCode::JR_Z_R8,
+            0x2E => TwoByteOpCode::LD_L_N8,
+            // 3x
+            0x30 => TwoByteOpCode::JR_NC_R8,
+            0x36 => TwoByteOpCode::LD_HLcontents_N8,
+            0x38 => TwoByteOpCode::JR_C_R8,
+            0x3E => TwoByteOpCode::LD_A_N8,
+            // Cx
+            0xC6 => TwoByteOpCode::ADD_A_N8,
+            0xCE => TwoByteOpCode::ADC_A_N8,
+            // Dx
+            0xD6 => TwoByteOpCode::SUB_N8,
+            0xDE => TwoByteOpCode::SBC_A_N8,
+            // Ex
+            0xE0 => TwoByteOpCode::LDH_A8contents_A,
+            0xE6 => TwoByteOpCode::AND_N8,
+            0xE8 => TwoByteOpCode::ADD_SP_R8,
+            0xEE => TwoByteOpCode::XOR_N8,
+            // Fx
+            0xF0 => TwoByteOpCode::LDH_A_A8contents,
+            0xF6 => TwoByteOpCode::OR_N8,
+            0xF8 => TwoByteOpCode::LD_HL_SPplusR8,
+            0xFE => TwoByteOpCode::CP_N8,
+            _ => {
+                panic!("ERROR::Tried to use an illegal TwoByteOpCode. Yoinked by Polar Bear Claw!")
+            }
+        }
+    }
+}
+
 pub enum TwoByteOpCode {
     // 0x
-    LD_B_D8 = 0x06,
-    LD_C_D8 = 0x08,
+    LD_B_N8 = 0x06,
+    LD_C_N8 = 0x0E,
 
     // 1x
     STOP = 0x10,
-    LD_D_D8 = 0x16,
+    LD_D_N8 = 0x16,
     JR_R8 = 0x18,
-    LD_E_D8 = 0x1E,
+    LD_E_N8 = 0x1E,
 
     // 2x
     JR_NZ_R8 = 0x20,
-    LD_H_D8 = 0x26,
+    LD_H_N8 = 0x26,
     JR_Z_R8 = 0x28,
-    LD_L_D8 = 0x2E,
+    LD_L_N8 = 0x2E,
 
     // 3x
     JR_NC_R8 = 0x30,
-    LD_HLcontents_D8 = 0x36,
+    LD_HLcontents_N8 = 0x36,
     JR_C_R8 = 0x38,
-    LD_A_D8 = 0x3E,
+    LD_A_N8 = 0x3E,
 
     // Cx
-    ADD_A_D8 = 0xC6,
-    ADC_A_D8 = 0xCE,
+    ADD_A_N8 = 0xC6,
+    ADC_A_N8 = 0xCE,
 
     // Dx
-    SUB_D8 = 0xD6,
-    SBC_A_D8 = 0xDE,
+    SUB_N8 = 0xD6,
+    SBC_A_N8 = 0xDE,
 
     // Ex
     LDH_A8contents_A = 0xE0, // TODO: ???
-    LD_Ccontents_A = 0xE2,   // TODO: ???
-    AND_D8 = 0xE6,
+    AND_N8 = 0xE6,
     ADD_SP_R8 = 0xE8,
-    XOR_D8 = 0xEE,
+    XOR_N8 = 0xEE,
 
     // Fx
     LDH_A_A8contents = 0xF0, // TODO: ???
-    LD_A_Ccontents = 0xF2,
-    OR_D8 = 0xF6,
+    OR_N8 = 0xF6,
     LD_HL_SPplusR8 = 0xF8,
-    CP_D8 = 0xFE,
+    CP_N8 = 0xFE,
 }
 
+impl From<u8> for ThreeByteOpCode {
+    fn from(code: u8) -> Self {
+        match code {
+            // 0x
+            0x01 => ThreeByteOpCode::LD_BC_D16,
+            0x08 => ThreeByteOpCode::LD_A16contents_SP,
+            // 1x
+            0x11 => ThreeByteOpCode::LD_DE_D16,
+            // 2x
+            0x21 => ThreeByteOpCode::LD_HL_D16,
+            // 3x
+            0x31 => ThreeByteOpCode::LD_SP_D16,
+            // Cx
+            0xC2 => ThreeByteOpCode::JP_NZ_A16,
+            0xC3 => ThreeByteOpCode::JP_A16,
+            0xC4 => ThreeByteOpCode::CALL_NZ_A16,
+            0xCA => ThreeByteOpCode::JP_Z_A16,
+            0xCC => ThreeByteOpCode::CALL_Z_A16,
+            0xCD => ThreeByteOpCode::CALL_A16,
+            // Dx
+            0xD2 => ThreeByteOpCode::JP_NC_A16,
+            0xD4 => ThreeByteOpCode::CALL_NC_A16,
+            0xDA => ThreeByteOpCode::JP_C_16,
+            0xDC => ThreeByteOpCode::CALL_C_A16,
+            // Ex
+            0xEA => ThreeByteOpCode::LD_A16contents_A,
+            // Fx
+            0xFA => ThreeByteOpCode::LD_A_A16contents,
+            _ => panic!(
+                "ERROR::Tried to use an illegal OneByteOpCode. Yoinked by Leopard Seal Claw!"
+            ),
+        }
+    }
+}
 pub enum ThreeByteOpCode {
     // 0x
     LD_BC_D16 = 0x01,

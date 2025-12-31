@@ -4,7 +4,7 @@ use crate::{
     cartridge::Cartridge,
     clock::Clock,
     cpu::Cpu,
-    cpu_logic::execute_one_byte_opcode,
+    cpu_logic::{execute_one_byte_opcode, execute_three_byte_opcode, execute_two_byte_opcode},
     memory::Memory,
     opcode::OneByteOpCode,
     registers::{RegWord, Registers},
@@ -392,23 +392,37 @@ impl Motherboard {
     }
 
     // TODO: CURRENTLY EXISTS FOR TESTING
-    fn perform_one_instruction(&mut self) {
-        println!(
-            "pc pre fetching next byte: {}",
-            self.registers.read_word(&RegWord::PC)
-        );
+    fn perform_one_operation(&mut self) {
+        // println!(
+        //     "pc pre fetching next byte: {}",
+        //     self.registers.read_word(&RegWord::PC)
+        // );
         let instruction = self.fetch_next_byte();
-        println!(
-            "pc post fetching next byte: {}",
-            self.registers.read_word(&RegWord::PC)
-        );
+        // println!(
+        //     "pc post fetching next byte: {}",
+        //     self.registers.read_word(&RegWord::PC)
+        // );
         let instruction_length = Motherboard::get_instruction_length(instruction);
-        println!("instruction: {}", instruction);
-        self.execute_opcode(instruction, instruction_length);
-        println!(
-            "pc post executing opcode {}",
-            self.registers.read_word(&RegWord::PC)
-        );
+        //println!("instruction: {}", instruction);
+        match instruction_length {
+            1 => {
+                execute_one_byte_opcode(self, instruction.into());
+            }
+            2 => {
+                let byte1 = self.fetch_next_byte();
+                execute_two_byte_opcode(self, instruction.into(), byte1);
+            }
+            3 => {
+                let low_byte = self.fetch_next_byte();
+                let high_byte = self.fetch_next_byte();
+                execute_three_byte_opcode(self, instruction.into(), high_byte, low_byte);
+            }
+            _ => panic!("ERROR::"),
+        }
+    }
+
+    fn perform_two_byte_instruction(&mut self) {
+        let opcode = self.fetch_next_byte();
     }
 }
 
@@ -436,13 +450,13 @@ mod tests {
         assert_eq!(motherboard.memory.read_byte(0x20), 0x3C);
         assert_eq!(motherboard.memory.read_byte(0x21), 0x47);
 
-        motherboard.perform_one_instruction();
+        motherboard.perform_one_operation();
 
         assert_eq!(motherboard.registers.read_word(&RegWord::PC), 0x21);
         assert_eq!(motherboard.registers.read_byte(&RegByte::A), 0x01);
         assert_eq!(motherboard.registers.read_byte(&RegByte::B), 0x00);
 
-        motherboard.perform_one_instruction();
+        motherboard.perform_one_operation();
 
         assert_eq!(motherboard.registers.read_word(&RegWord::PC), 0x22);
         assert_eq!(motherboard.registers.read_byte(&RegByte::A), 0x01);

@@ -2400,4 +2400,215 @@ mod tests {
         assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), true);
         assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
     }
+
+    // Load 0xFF00 + n8 commands
+    #[test]
+    fn load_a_to_0xff_plus_c() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        motherboard.registers.write_byte(&RegByte::C, 0x33);
+        motherboard.registers.write_byte(&RegByte::A, 7);
+        motherboard.memory.write_byte(0xFF33, 0);
+
+        execute_one_byte_opcode(&mut motherboard, OneByteOpCode::LD_Ccontents_A);
+
+        assert_eq!(motherboard.registers.read_byte(&RegByte::C), 0x33);
+        assert_eq!(motherboard.registers.read_byte(&RegByte::A), 7);
+        assert_eq!(motherboard.memory.read_byte(0xFF33), 7);
+    }
+
+    #[test]
+    fn load_0xff_plus_c_to_a() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        motherboard.registers.write_byte(&RegByte::C, 0x33);
+        motherboard.registers.write_byte(&RegByte::A, 7);
+        motherboard.memory.write_byte(0xFF33, 2);
+
+        execute_one_byte_opcode(&mut motherboard, OneByteOpCode::LD_A_Ccontents);
+
+        assert_eq!(motherboard.registers.read_byte(&RegByte::C), 0x33);
+        assert_eq!(motherboard.registers.read_byte(&RegByte::A), 2);
+        assert_eq!(motherboard.memory.read_byte(0xFF33), 2);
+    }
+
+    // Two Byte OpCode Testing
+    // Load byte into register
+    #[test]
+    fn load_byte_into_b() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        motherboard.registers.write_byte(&RegByte::B, 0x43);
+        assert_eq!(motherboard.registers.read_byte(&RegByte::B), 0x43);
+
+        motherboard.registers.write_flag(RegFlag::Zero, false);
+        motherboard.registers.write_flag(RegFlag::Carry, true);
+        motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+        motherboard.registers.write_flag(RegFlag::Subtraction, true);
+
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), true);
+
+        execute_two_byte_opcode(&mut motherboard, TwoByteOpCode::LD_B_N8, 0x91);
+
+        assert_eq!(motherboard.registers.read_byte(&RegByte::B), 0x91);
+
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), true);
+    }
+
+    // Jump Offset
+    #[test]
+    fn jump_offset_no_wrap() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        motherboard.registers.write_word(&RegWord::PC, 1200);
+
+        execute_two_byte_opcode(&mut motherboard, TwoByteOpCode::JR_R8, 100);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::PC), 1300);
+
+        execute_two_byte_opcode(&mut motherboard, TwoByteOpCode::JR_R8, 128);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::PC), 1172);
+
+        execute_two_byte_opcode(&mut motherboard, TwoByteOpCode::JR_R8, 127);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::PC), 1299);
+    }
+
+    #[test]
+    fn jump_offset_wrap() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        motherboard.registers.write_word(&RegWord::PC, 10);
+
+        execute_two_byte_opcode(&mut motherboard, TwoByteOpCode::JR_R8, 240);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::PC), 0xFFFA);
+
+        execute_two_byte_opcode(&mut motherboard, TwoByteOpCode::JR_R8, 7);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::PC), 1);
+    }
+
+    // Addition with signed integer and stackpointer:
+    #[test]
+    fn positive_r8_added_to_sp() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        motherboard.registers.write_word(&RegWord::SP, 0x1000);
+
+        execute_two_byte_opcode(&mut motherboard, TwoByteOpCode::ADD_SP_R8, 0x05);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::SP), 0x1005);
+
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    // TODO: Look over this test, negatives spooky
+    #[test]
+    fn negative_r8_added_to_sp() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        motherboard.registers.write_word(&RegWord::SP, 0x0010);
+
+        execute_two_byte_opcode(&mut motherboard, TwoByteOpCode::ADD_SP_R8, 0xFF); // -1
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::SP), 0x000F);
+
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), true);
+    }
+
+    #[test]
+    fn half_carry_from_r8_added_to_sp() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        motherboard.registers.write_word(&RegWord::SP, 0x000F);
+
+        execute_two_byte_opcode(&mut motherboard, TwoByteOpCode::ADD_SP_R8, 0x01); // 1
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::SP), 0x0010);
+
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    // TODO: Look over this test, negatives spooky
+    #[test]
+    fn half_carry_from_negative_r8_added_to_sp() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        motherboard.registers.write_word(&RegWord::SP, 0x001F);
+
+        execute_two_byte_opcode(&mut motherboard, TwoByteOpCode::ADD_SP_R8, 0xFF); // -1
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::SP), 0x001E);
+
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), true);
+    }
+
+    // LD FF?? Related tests
+    #[test]
+    fn loadhigh_a_a8() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        motherboard.memory.write_byte(0xFFFE, 0x21);
+        motherboard.memory.write_byte(0xFE, 0x99); // Shouldn't hit this.
+
+        execute_two_byte_opcode(&mut motherboard, TwoByteOpCode::LDH_A_A8contents, 0xFE);
+
+        assert_eq!(motherboard.registers.read_byte(&RegByte::A), 0x21);
+
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    // Three Byte OpCode Tests:
+    // Loading SP into a16 & 16+a1
+    #[test]
+    fn load_sp_into_memory() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        motherboard.registers.write_word(&RegWord::SP, 0xABCD);
+
+        execute_three_byte_opcode(
+            &mut motherboard,
+            ThreeByteOpCode::LD_A16contents_SP,
+            0xFF,
+            0x10,
+        );
+
+        assert_eq!(motherboard.memory.read_byte(0xFF10), 0xCD);
+        assert_eq!(motherboard.memory.read_byte(0xFF11), 0xAB);
+    }
+
+    // Loading a 16 bit num into SP
+    #[test]
+    fn load_d16_into_sp() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        motherboard.registers.write_word(&RegWord::SP, 0xABCD);
+
+        execute_three_byte_opcode(&mut motherboard, ThreeByteOpCode::LD_SP_D16, 0xFA, 0x10);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::SP), 0xFA10);
+    }
 }

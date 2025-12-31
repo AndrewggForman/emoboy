@@ -1231,6 +1231,14 @@ pub fn execute_one_byte_opcode(motherboard: &mut motherboard::Motherboard, code:
 
             motherboard.clock.cycle_clock(3);
         }
+        OneByteOpCode::LD_Ccontents_A => {
+            let address: u16 = 0xFF00 | motherboard.registers.read_byte(&RegByte::C) as u16;
+
+            motherboard
+                .memory
+                .write_byte(address, motherboard.registers.read_byte(&RegByte::A));
+            motherboard.clock.cycle_clock(2);
+        }
         OneByteOpCode::PUSH_HL => {
             motherboard.registers.decrement_sp();
             load_byte_to_virtual_register_target(
@@ -1280,6 +1288,14 @@ pub fn execute_one_byte_opcode(motherboard: &mut motherboard::Motherboard, code:
 
             motherboard.clock.cycle_clock(3);
         }
+        OneByteOpCode::LD_A_Ccontents => {
+            let address: u16 = 0xFF00 | motherboard.registers.read_byte(&RegByte::C) as u16;
+
+            motherboard
+                .registers
+                .write_byte(&RegByte::A, motherboard.memory.read_byte(address));
+            motherboard.clock.cycle_clock(2);
+        }
         OneByteOpCode::DI => {
             motherboard.registers.write_ime(false);
             motherboard.clock.cycle_clock(1);
@@ -1322,8 +1338,7 @@ pub fn execute_one_byte_opcode(motherboard: &mut motherboard::Motherboard, code:
             fast_reset_to_address(motherboard, 0x0038);
 
             motherboard.clock.cycle_clock(4)
-        }
-        _ => panic!("ERROR::Invalid One Byte OpCode! Yoinked by Jaguar Claw!"),
+        } // _ => panic!("ERROR::Invalid One Byte OpCode! Yoinked by Jaguar Claw!"),
     }
 }
 
@@ -1333,17 +1348,275 @@ pub fn execute_two_byte_opcode(
     byte1: u8,
 ) {
     match code {
-        _ => panic!("ERROR::Invalid Two Byte OpCode! Yoinked by Lobster Claw!"),
+        // 0x
+        TwoByteOpCode::LD_B_N8 => {
+            motherboard.registers.write_byte(&RegByte::B, byte1);
+            motherboard.clock.cycle_clock(2);
+        }
+        TwoByteOpCode::LD_C_N8 => {
+            motherboard.registers.write_byte(&RegByte::C, byte1);
+            motherboard.clock.cycle_clock(2);
+        }
+        // 1x
+        TwoByteOpCode::STOP => {
+            // TODO: Look into more later
+        }
+        TwoByteOpCode::LD_D_N8 => {
+            motherboard.registers.write_byte(&RegByte::D, byte1);
+            motherboard.clock.cycle_clock(2);
+        }
+        TwoByteOpCode::JR_R8 => {
+            let signed_byte1: i8 = byte1 as i8;
+            let current_address = motherboard.registers.read_word(&RegWord::PC);
+            let signed_address: i16 = current_address as i16;
+            let new_address = signed_address.wrapping_add(signed_byte1.into());
+
+            motherboard
+                .registers
+                .write_word(&RegWord::PC, new_address as u16);
+
+            motherboard.clock.cycle_clock(3);
+        }
+        TwoByteOpCode::LD_E_N8 => {
+            motherboard.registers.write_byte(&RegByte::E, byte1);
+            motherboard.clock.cycle_clock(2);
+        }
+        // 2x
+        TwoByteOpCode::JR_NZ_R8 => {
+            if motherboard.registers.read_flag(RegFlag::Zero) {
+                motherboard.clock.cycle_clock(2);
+                return;
+            }
+
+            let signed_byte1: i8 = byte1 as i8;
+            let current_address = motherboard.registers.read_word(&RegWord::PC);
+            let signed_address: i16 = current_address as i16;
+            let new_address = signed_address.wrapping_add(signed_byte1.into());
+
+            motherboard
+                .registers
+                .write_word(&RegWord::PC, new_address as u16);
+            motherboard.clock.cycle_clock(3);
+        }
+        TwoByteOpCode::LD_H_N8 => {
+            motherboard.registers.write_byte(&RegByte::H, byte1);
+            motherboard.clock.cycle_clock(2);
+        }
+        TwoByteOpCode::JR_Z_R8 => {
+            if !motherboard.registers.read_flag(RegFlag::Zero) {
+                motherboard.clock.cycle_clock(2);
+                return;
+            }
+
+            let signed_byte1: i8 = byte1 as i8;
+            let current_address = motherboard.registers.read_word(&RegWord::PC);
+            let signed_address: i16 = current_address as i16;
+            let new_address = signed_address.wrapping_add(signed_byte1.into());
+
+            motherboard
+                .registers
+                .write_word(&RegWord::PC, new_address as u16);
+            motherboard.clock.cycle_clock(3);
+        }
+        TwoByteOpCode::LD_L_N8 => {
+            motherboard.registers.write_byte(&RegByte::L, byte1);
+            motherboard.clock.cycle_clock(2);
+        }
+        // 3x
+        TwoByteOpCode::JR_NC_R8 => {
+            if motherboard.registers.read_flag(RegFlag::Carry) {
+                motherboard.clock.cycle_clock(2);
+                return;
+            }
+
+            let signed_byte1: i8 = byte1 as i8;
+            let current_address = motherboard.registers.read_word(&RegWord::PC);
+            let signed_address: i16 = current_address as i16;
+            let new_address = signed_address.wrapping_add(signed_byte1.into());
+
+            motherboard
+                .registers
+                .write_word(&RegWord::PC, new_address as u16);
+            motherboard.clock.cycle_clock(3);
+        }
+        TwoByteOpCode::LD_HLcontents_N8 => {
+            let hl_byte_address: u16 = motherboard.registers.read_word(&RegWord::HL);
+            motherboard.memory.write_byte(hl_byte_address, byte1);
+            motherboard.clock.cycle_clock(3);
+        }
+        TwoByteOpCode::JR_C_R8 => {
+            if !motherboard.registers.read_flag(RegFlag::Carry) {
+                motherboard.clock.cycle_clock(2);
+                return;
+            }
+
+            let signed_byte1: i8 = byte1 as i8;
+            let current_address = motherboard.registers.read_word(&RegWord::PC);
+            let signed_address: i16 = current_address as i16;
+            let new_address = signed_address.wrapping_add(signed_byte1.into());
+
+            motherboard
+                .registers
+                .write_word(&RegWord::PC, new_address as u16);
+            motherboard.clock.cycle_clock(3);
+        }
+        TwoByteOpCode::LD_A_N8 => {
+            motherboard.registers.write_byte(&RegByte::A, byte1);
+            motherboard.clock.cycle_clock(2);
+        }
+        // Cx
+        TwoByteOpCode::ADD_A_N8 => {
+            add_byte_to_8bit_register(motherboard, byte1, &RegByte::A);
+            motherboard.clock.cycle_clock(2);
+        }
+        TwoByteOpCode::ADC_A_N8 => {
+            add_byte_and_carry_to_8bit_register(motherboard, byte1, &RegByte::A);
+            motherboard.clock.cycle_clock(2);
+        }
+        // Dx
+        TwoByteOpCode::SUB_N8 => {
+            subtract_byte_from_8bit_register(motherboard, byte1, &RegByte::A);
+            motherboard.clock.cycle_clock(2);
+        }
+        TwoByteOpCode::SBC_A_N8 => {
+            subtract_byte_and_carry_from_8bit_register(motherboard, byte1, &RegByte::A);
+            motherboard.clock.cycle_clock(2);
+        }
+        // Ex
+        TwoByteOpCode::LDH_A8contents_A => {
+            // TODO: Make sure this is correct
+            // 0b1111_1111_0000_0000 | 0b0000_0000_????_???? => 0b1111_1111_????_????
+            let address: u16 = 0xFF00 | byte1 as u16;
+
+            motherboard
+                .memory
+                .write_byte(address, motherboard.registers.read_byte(&RegByte::A));
+            motherboard.clock.cycle_clock(3);
+        }
+        TwoByteOpCode::AND_N8 => {
+            bitwise_byte_and_a(motherboard, byte1);
+            motherboard.clock.cycle_clock(2);
+        }
+        // TODO: Need to double check this down the line. Something about flags not caring about it being signed addition?
+        TwoByteOpCode::ADD_SP_R8 => {
+            let signed_byte1: i8 = byte1 as i8;
+            let current_sp = motherboard.registers.read_word(&RegWord::SP);
+            let signed_sp: i16 = current_sp as i16;
+
+            let half_carry = ((current_sp & 0xF) + (byte1 & 0xF) as u16) > 0xF;
+            let full_carry = ((current_sp & 0xFF) + (byte1 & 0xFF) as u16) > 0xFF;
+
+            let new_sp = signed_sp.wrapping_add(signed_byte1.into());
+
+            motherboard
+                .registers
+                .write_word(&RegWord::SP, new_sp as u16);
+
+            motherboard
+                .registers
+                .write_flag(RegFlag::HalfCarry, half_carry);
+            motherboard.registers.write_flag(RegFlag::Carry, full_carry);
+            motherboard.registers.write_flag(RegFlag::Zero, false);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Subtraction, false);
+            motherboard.clock.cycle_clock(4);
+        }
+        TwoByteOpCode::XOR_N8 => {
+            bitwise_byte_xor_a(motherboard, byte1);
+            motherboard.clock.cycle_clock(2);
+        }
+        // Fx
+        TwoByteOpCode::LDH_A_A8contents => {
+            let address: u16 = 0xFF00 | byte1 as u16;
+
+            motherboard
+                .registers
+                .write_byte(&RegByte::A, motherboard.memory.read_byte(address));
+
+            motherboard.clock.cycle_clock(3);
+        }
+        TwoByteOpCode::OR_N8 => {
+            bitwise_byte_or_a(motherboard, byte1);
+            motherboard.clock.cycle_clock(2);
+        }
+        // TODO: Check later. same as ADD SP r8, but also check if SP should be updated here or just
+        TwoByteOpCode::LD_HL_SPplusR8 => {
+            let signed_byte1: i8 = byte1 as i8;
+            let current_sp = motherboard.registers.read_word(&RegWord::SP);
+            let signed_sp: i16 = current_sp as i16;
+
+            let half_carry = ((current_sp & 0xF) + (byte1 & 0xF) as u16) > 0xF;
+            let full_carry = ((current_sp & 0xFF) + (byte1 & 0xFF) as u16) > 0xFF;
+
+            let new_hl = signed_sp.wrapping_add(signed_byte1.into());
+
+            motherboard
+                .registers
+                .write_word(&RegWord::HL, new_hl as u16);
+
+            motherboard
+                .registers
+                .write_flag(RegFlag::HalfCarry, half_carry);
+            motherboard.registers.write_flag(RegFlag::Carry, full_carry);
+            motherboard.registers.write_flag(RegFlag::Zero, false);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Subtraction, false);
+            motherboard.clock.cycle_clock(3);
+        }
+        TwoByteOpCode::CP_N8 => {
+            compare_byte_to_a(motherboard, byte1);
+            motherboard.clock.cycle_clock(2);
+        }
     }
 }
 
 pub fn execute_three_byte_opcode(
     motherboard: &mut motherboard::Motherboard,
     code: ThreeByteOpCode,
-    byte1: u8,
-    byte2: u8,
+    high_byte: u8,
+    low_byte: u8,
 ) {
     match code {
+        // 0x
+        ThreeByteOpCode::LD_BC_D16 => {
+            motherboard.registers.write_byte(&RegByte::B, high_byte);
+            motherboard.registers.write_byte(&RegByte::C, low_byte);
+            motherboard.clock.cycle_clock(3);
+        }
+        ThreeByteOpCode::LD_A16contents_SP => {
+            // Load low byte of SP into a16, load high byte of SP into a16+1
+            let low_byte_sp = (motherboard.registers.read_word(&RegWord::SP) & 0xFF) as u8;
+            let high_byte_sp = ((motherboard.registers.read_word(&RegWord::SP) >> 8) & 0xFF) as u8;
+            let address = ((high_byte as u16) << 8) | (low_byte as u16);
+
+            motherboard.memory.write_byte(address, low_byte_sp);
+            motherboard.memory.write_byte(address + 1, high_byte_sp);
+
+            motherboard.clock.cycle_clock(5);
+        }
+        // 1x
+        ThreeByteOpCode::LD_DE_D16 => {
+            motherboard.registers.write_byte(&RegByte::D, high_byte);
+            motherboard.registers.write_byte(&RegByte::E, low_byte);
+            motherboard.clock.cycle_clock(3);
+        }
+        // 2x
+        ThreeByteOpCode::LD_HL_D16 => {
+            motherboard.registers.write_byte(&RegByte::H, high_byte);
+            motherboard.registers.write_byte(&RegByte::L, low_byte);
+            motherboard.clock.cycle_clock(3);
+        }
+        // 3x
+        ThreeByteOpCode::LD_SP_D16 => {
+            let low_byte_sp = (motherboard.registers.read_word(&RegWord::SP) & 0xFF) as u8;
+            let high_byte_sp = ((motherboard.registers.read_word(&RegWord::SP) >> 8) & 0xFF) as u8;
+            let sp_word = ((high_byte as u16) << 8) | (low_byte as u16);
+
+            motherboard.registers.write_word(&RegWord::SP, sp_word);
+            motherboard.clock.cycle_clock(3);
+        }
         _ => panic!("ERROR::Invalid Three Byte OpCode! Yoinked by Hawk Claw!"),
     }
 }
