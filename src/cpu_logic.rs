@@ -1540,7 +1540,7 @@ pub fn execute_two_byte_opcode(
             bitwise_byte_or_a(motherboard, byte1);
             motherboard.clock.cycle_clock(2);
         }
-        // TODO: Check later. same as ADD SP r8, but also check if SP should be updated here or just HL
+        // TODO: Check later. same as ADD SP r8, but also check if SP should be updated here or just
         TwoByteOpCode::LD_HL_SPplusR8 => {
             let signed_byte1: i8 = byte1 as i8;
             let current_sp = motherboard.registers.read_word(&RegWord::SP);
@@ -1569,17 +1569,54 @@ pub fn execute_two_byte_opcode(
             compare_byte_to_a(motherboard, byte1);
             motherboard.clock.cycle_clock(2);
         }
-        _ => panic!("ERROR::Invalid Two Byte OpCode! Yoinked by Lobster Claw!"),
     }
 }
 
 pub fn execute_three_byte_opcode(
     motherboard: &mut motherboard::Motherboard,
     code: ThreeByteOpCode,
-    byte1: u8,
-    byte2: u8,
+    high_byte: u8,
+    low_byte: u8,
 ) {
     match code {
+        // 0x
+        ThreeByteOpCode::LD_BC_D16 => {
+            motherboard.registers.write_byte(&RegByte::B, high_byte);
+            motherboard.registers.write_byte(&RegByte::C, low_byte);
+            motherboard.clock.cycle_clock(3);
+        }
+        ThreeByteOpCode::LD_A16contents_SP => {
+            // Load low byte of SP into a16, load high byte of SP into a16+1
+            let low_byte_sp = (motherboard.registers.read_word(&RegWord::SP) & 0xFF) as u8;
+            let high_byte_sp = ((motherboard.registers.read_word(&RegWord::SP) >> 8) & 0xFF) as u8;
+            let address = ((high_byte as u16) << 8) | (low_byte as u16);
+
+            motherboard.memory.write_byte(address, low_byte_sp);
+            motherboard.memory.write_byte(address + 1, high_byte_sp);
+
+            motherboard.clock.cycle_clock(5);
+        }
+        // 1x
+        ThreeByteOpCode::LD_DE_D16 => {
+            motherboard.registers.write_byte(&RegByte::D, high_byte);
+            motherboard.registers.write_byte(&RegByte::E, low_byte);
+            motherboard.clock.cycle_clock(3);
+        }
+        // 2x
+        ThreeByteOpCode::LD_HL_D16 => {
+            motherboard.registers.write_byte(&RegByte::H, high_byte);
+            motherboard.registers.write_byte(&RegByte::L, low_byte);
+            motherboard.clock.cycle_clock(3);
+        }
+        // 3x
+        ThreeByteOpCode::LD_SP_D16 => {
+            let low_byte_sp = (motherboard.registers.read_word(&RegWord::SP) & 0xFF) as u8;
+            let high_byte_sp = ((motherboard.registers.read_word(&RegWord::SP) >> 8) & 0xFF) as u8;
+            let sp_word = ((high_byte as u16) << 8) | (low_byte as u16);
+
+            motherboard.registers.write_word(&RegWord::SP, sp_word);
+            motherboard.clock.cycle_clock(3);
+        }
         _ => panic!("ERROR::Invalid Three Byte OpCode! Yoinked by Hawk Claw!"),
     }
 }

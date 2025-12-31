@@ -2564,7 +2564,6 @@ mod tests {
     }
 
     // LD FF?? Related tests
-
     #[test]
     fn loadhigh_a_a8() {
         let mut motherboard = motherboard::Motherboard::new();
@@ -2580,5 +2579,36 @@ mod tests {
         assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), false);
         assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), false);
         assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    // Three Byte OpCode Tests:
+    // Loading SP into a16 & 16+a1
+    #[test]
+    fn load_sp_into_memory() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        motherboard.registers.write_word(&RegWord::SP, 0xABCD);
+
+        execute_three_byte_opcode(
+            &mut motherboard,
+            ThreeByteOpCode::LD_A16contents_SP,
+            0xFF,
+            0x10,
+        );
+
+        assert_eq!(motherboard.memory.read_byte(0xFF10), 0xCD);
+        assert_eq!(motherboard.memory.read_byte(0xFF11), 0xAB);
+    }
+
+    // Loading a 16 bit num into SP
+    #[test]
+    fn load_d16_into_sp() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        motherboard.registers.write_word(&RegWord::SP, 0xABCD);
+
+        execute_three_byte_opcode(&mut motherboard, ThreeByteOpCode::LD_SP_D16, 0xFA, 0x10);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::SP), 0xFA10);
     }
 }

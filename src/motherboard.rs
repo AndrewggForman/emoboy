@@ -413,9 +413,9 @@ impl Motherboard {
                 execute_two_byte_opcode(self, instruction.into(), byte1);
             }
             3 => {
-                let byte1 = self.fetch_next_byte();
-                let byte2 = self.fetch_next_byte();
-                execute_three_byte_opcode(self, instruction.into(), byte1, byte2);
+                let low_byte = self.fetch_next_byte();
+                let high_byte = self.fetch_next_byte();
+                execute_three_byte_opcode(self, instruction.into(), high_byte, low_byte);
             }
             _ => panic!("ERROR::"),
         }
