@@ -1617,6 +1617,50 @@ pub fn execute_three_byte_opcode(
             motherboard.registers.write_word(&RegWord::SP, sp_word);
             motherboard.clock.cycle_clock(3);
         }
+        // Cx
+        ThreeByteOpCode::JP_NZ_A16 => {
+            if motherboard.registers.read_flag(RegFlag::Zero) {
+                motherboard.clock.cycle_clock(3);
+                return;
+            }
+
+            let address = ((high_byte as u16) << 8) | (low_byte as u16);
+            motherboard.registers.write_word(&RegWord::PC, address);
+            motherboard.clock.cycle_clock(4);
+        }
+        ThreeByteOpCode::JP_A16 => {
+            let address = ((high_byte as u16) << 8) | (low_byte as u16);
+            motherboard.registers.write_word(&RegWord::PC, address);
+            motherboard.clock.cycle_clock(4);
+        }
+        // TODO: Test for this
+        ThreeByteOpCode::CALL_NZ_A16 => {
+            if motherboard.registers.read_flag(RegFlag::Zero) {
+                motherboard.clock.cycle_clock(3);
+                return;
+            }
+
+            let ret_address = motherboard
+                .registers
+                .read_word(&RegWord::SP)
+                .wrapping_add(1);
+
+            let ret_address_high = ((ret_address >> 8) & 0xFF) as u8;
+            let ret_address_low = (ret_address & 0xFF) as u8;
+
+            motherboard.registers.decrement_sp();
+            load_byte_to_virtual_register_target(motherboard, ret_address_high, &RegWord::SP);
+
+            motherboard.registers.decrement_sp();
+            load_byte_to_virtual_register_target(motherboard, ret_address_low, &RegWord::SP);
+
+            let new_address = ((high_byte as u16) << 8) | (low_byte as u16);
+            motherboard.registers.write_word(&RegWord::PC, new_address);
+            motherboard.clock.cycle_clock(6);
+        }
+        ThreeByteOpCode::JP_Z_A16 => {}
+        ThreeByteOpCode::CALL_Z_A16 => {}
+        ThreeByteOpCode::CALL_A16 => {}
         _ => panic!("ERROR::Invalid Three Byte OpCode! Yoinked by Hawk Claw!"),
     }
 }
