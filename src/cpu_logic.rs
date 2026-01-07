@@ -1633,7 +1633,6 @@ pub fn execute_three_byte_opcode(
             motherboard.registers.write_word(&RegWord::PC, address);
             motherboard.clock.cycle_clock(4);
         }
-        // TODO: Test for this
         ThreeByteOpCode::CALL_NZ_A16 => {
             if motherboard.registers.read_flag(RegFlag::Zero) {
                 motherboard.clock.cycle_clock(3);
@@ -1642,7 +1641,7 @@ pub fn execute_three_byte_opcode(
 
             let ret_address = motherboard
                 .registers
-                .read_word(&RegWord::SP)
+                .read_word(&RegWord::PC)
                 .wrapping_add(1);
 
             let ret_address_high = ((ret_address >> 8) & 0xFF) as u8;
@@ -1658,10 +1657,145 @@ pub fn execute_three_byte_opcode(
             motherboard.registers.write_word(&RegWord::PC, new_address);
             motherboard.clock.cycle_clock(6);
         }
-        ThreeByteOpCode::JP_Z_A16 => {}
-        ThreeByteOpCode::CALL_Z_A16 => {}
-        ThreeByteOpCode::CALL_A16 => {}
-        _ => panic!("ERROR::Invalid Three Byte OpCode! Yoinked by Hawk Claw!"),
+        ThreeByteOpCode::JP_Z_A16 => {
+            if !motherboard.registers.read_flag(RegFlag::Zero) {
+                motherboard.clock.cycle_clock(3);
+                return;
+            }
+
+            let address = ((high_byte as u16) << 8) | (low_byte as u16);
+            motherboard.registers.write_word(&RegWord::PC, address);
+            motherboard.clock.cycle_clock(4);
+        }
+        ThreeByteOpCode::CALL_Z_A16 => {
+            if !motherboard.registers.read_flag(RegFlag::Zero) {
+                motherboard.clock.cycle_clock(3);
+                return;
+            }
+
+            let ret_address = motherboard
+                .registers
+                .read_word(&RegWord::PC)
+                .wrapping_add(1);
+
+            let ret_address_high = ((ret_address >> 8) & 0xFF) as u8;
+            let ret_address_low = (ret_address & 0xFF) as u8;
+
+            motherboard.registers.decrement_sp();
+            load_byte_to_virtual_register_target(motherboard, ret_address_high, &RegWord::SP);
+
+            motherboard.registers.decrement_sp();
+            load_byte_to_virtual_register_target(motherboard, ret_address_low, &RegWord::SP);
+
+            let new_address = ((high_byte as u16) << 8) | (low_byte as u16);
+            motherboard.registers.write_word(&RegWord::PC, new_address);
+            motherboard.clock.cycle_clock(6);
+        }
+        ThreeByteOpCode::CALL_A16 => {
+            let ret_address = motherboard
+                .registers
+                .read_word(&RegWord::PC)
+                .wrapping_add(1);
+
+            let ret_address_high = ((ret_address >> 8) & 0xFF) as u8;
+            let ret_address_low = (ret_address & 0xFF) as u8;
+
+            motherboard.registers.decrement_sp();
+            load_byte_to_virtual_register_target(motherboard, ret_address_high, &RegWord::SP);
+
+            motherboard.registers.decrement_sp();
+            load_byte_to_virtual_register_target(motherboard, ret_address_low, &RegWord::SP);
+
+            let new_address = ((high_byte as u16) << 8) | (low_byte as u16);
+            motherboard.registers.write_word(&RegWord::PC, new_address);
+            motherboard.clock.cycle_clock(6);
+        }
+        // Dx
+        ThreeByteOpCode::JP_NC_A16 => {
+            if motherboard.registers.read_flag(RegFlag::Carry) {
+                motherboard.clock.cycle_clock(3);
+                return;
+            }
+
+            let address = ((high_byte as u16) << 8) | (low_byte as u16);
+            motherboard.registers.write_word(&RegWord::PC, address);
+            motherboard.clock.cycle_clock(4);
+        }
+        ThreeByteOpCode::CALL_NC_A16 => {
+            if motherboard.registers.read_flag(RegFlag::Carry) {
+                motherboard.clock.cycle_clock(3);
+                return;
+            }
+
+            let ret_address = motherboard
+                .registers
+                .read_word(&RegWord::PC)
+                .wrapping_add(1);
+
+            let ret_address_high = ((ret_address >> 8) & 0xFF) as u8;
+            let ret_address_low = (ret_address & 0xFF) as u8;
+
+            motherboard.registers.decrement_sp();
+            load_byte_to_virtual_register_target(motherboard, ret_address_high, &RegWord::SP);
+
+            motherboard.registers.decrement_sp();
+            load_byte_to_virtual_register_target(motherboard, ret_address_low, &RegWord::SP);
+
+            let new_address = ((high_byte as u16) << 8) | (low_byte as u16);
+            motherboard.registers.write_word(&RegWord::PC, new_address);
+            motherboard.clock.cycle_clock(6);
+        }
+        ThreeByteOpCode::JP_C_16 => {
+            if !motherboard.registers.read_flag(RegFlag::Carry) {
+                motherboard.clock.cycle_clock(3);
+                return;
+            }
+
+            let address = ((high_byte as u16) << 8) | (low_byte as u16);
+            motherboard.registers.write_word(&RegWord::PC, address);
+            motherboard.clock.cycle_clock(4);
+        }
+        ThreeByteOpCode::CALL_C_A16 => {
+            if !motherboard.registers.read_flag(RegFlag::Carry) {
+                motherboard.clock.cycle_clock(3);
+                return;
+            }
+
+            let ret_address = motherboard
+                .registers
+                .read_word(&RegWord::PC)
+                .wrapping_add(1);
+
+            let ret_address_high = ((ret_address >> 8) & 0xFF) as u8;
+            let ret_address_low = (ret_address & 0xFF) as u8;
+
+            motherboard.registers.decrement_sp();
+            load_byte_to_virtual_register_target(motherboard, ret_address_high, &RegWord::SP);
+
+            motherboard.registers.decrement_sp();
+            load_byte_to_virtual_register_target(motherboard, ret_address_low, &RegWord::SP);
+
+            let new_address = ((high_byte as u16) << 8) | (low_byte as u16);
+            motherboard.registers.write_word(&RegWord::PC, new_address);
+            motherboard.clock.cycle_clock(6);
+        }
+        // Ex
+        ThreeByteOpCode::LD_A16contents_A => {
+            let address = ((high_byte as u16) << 8) | (low_byte as u16);
+            motherboard
+                .memory
+                .write_byte(address, motherboard.registers.read_byte(&RegByte::A));
+
+            motherboard.clock.cycle_clock(4);
+        }
+        // Fx
+        ThreeByteOpCode::LD_A_A16contents => {
+            let address = ((high_byte as u16) << 8) | (low_byte as u16);
+            motherboard
+                .registers
+                .write_byte(&RegByte::A, motherboard.memory.read_byte(address));
+            motherboard.clock.cycle_clock(4);
+        }
     }
 }
 
