@@ -2611,4 +2611,47 @@ mod tests {
 
         assert_eq!(motherboard.registers.read_word(&RegWord::SP), 0xFA10);
     }
+
+    // Jumping to an n16
+    #[test]
+    fn jump_to_d16() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        motherboard.registers.write_word(&RegWord::PC, 0x0010);
+        motherboard.registers.write_flag(RegFlag::Zero, true);
+
+        execute_three_byte_opcode(&mut motherboard, ThreeByteOpCode::JP_NZ_A16, 0xFA, 0x10);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::PC), 0x0010);
+
+        motherboard.registers.write_flag(RegFlag::Zero, false);
+
+        execute_three_byte_opcode(&mut motherboard, ThreeByteOpCode::JP_NZ_A16, 0xFA, 0x10);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::PC), 0xFA10);
+    }
+
+    // TODO: test calls => ThreeByteOpCode::CALL_NZ_A16
+    #[test]
+    fn call_nz_to_a16() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        motherboard.registers.write_word(&RegWord::PC, 0x0010);
+        motherboard.registers.write_word(&RegWord::SP, 0xFFF5);
+
+        motherboard.registers.write_flag(RegFlag::Zero, true);
+
+        execute_three_byte_opcode(&mut motherboard, ThreeByteOpCode::CALL_NZ_A16, 0xFA, 0x10);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::PC), 0x0010);
+        assert_eq!(motherboard.registers.read_word(&RegWord::SP), 0xFFF5);
+
+        motherboard.registers.write_flag(RegFlag::Zero, false);
+
+        execute_three_byte_opcode(&mut motherboard, ThreeByteOpCode::CALL_NZ_A16, 0xFA, 0x10);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::PC), 0xFA10);
+        assert_eq!(motherboard.memory.read_byte(0xFFF4), 0x00);
+        assert_eq!(motherboard.memory.read_byte(0xFFF3), 0x11);
+    }
 }
