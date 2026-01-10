@@ -2,7 +2,7 @@
 
 use crate::clock;
 use crate::motherboard;
-use crate::opcode::{OneByteOpCode, ThreeByteOpCode, TwoByteOpCode};
+use crate::opcode::{OneByteOpCode, PrefixOpCode, ThreeByteOpCode, TwoByteOpCode};
 use crate::registers::{RegByte, RegFlag, RegWord};
 
 // TODO: Add OpCodes. Refactor tests/build new ones. Implement clock cycles for each OpCode/fix clock cyles.
@@ -1799,6 +1799,373 @@ pub fn execute_three_byte_opcode(
     }
 }
 
+pub fn execute_prefix_opcode(motherboard: &mut motherboard::Motherboard, code: PrefixOpCode) {
+    match code {
+        // 0x
+        PrefixOpCode::RLC_B => {
+            rlc_register(motherboard, &RegByte::B);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RLC_C => {
+            rlc_register(motherboard, &RegByte::C);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RLC_D => {
+            rlc_register(motherboard, &RegByte::D);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RLC_E => {
+            rlc_register(motherboard, &RegByte::E);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RLC_H => {
+            rlc_register(motherboard, &RegByte::H);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RLC_L => {
+            rlc_register(motherboard, &RegByte::L);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RLC_HLcontents => {
+            let hl_address = motherboard.registers.read_word(&RegWord::HL);
+            let bit7 = motherboard.memory.read_byte(hl_address) & 0b1000_0000;
+            let rotated_register = motherboard.memory.read_byte(hl_address).rotate_left(1);
+            motherboard.memory.write_byte(hl_address, rotated_register);
+
+            motherboard
+                .registers
+                .write_flag(RegFlag::Zero, rotated_register == 0);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Subtraction, false);
+            motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Carry, bit7 == 0b1000_0000);
+            motherboard.clock.cycle_clock(4);
+        }
+        PrefixOpCode::RLC_A => {
+            rlc_register(motherboard, &RegByte::A);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RRC_B => {
+            rrc_register(motherboard, &RegByte::B);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RRC_C => {
+            rrc_register(motherboard, &RegByte::C);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RRC_D => {
+            rrc_register(motherboard, &RegByte::D);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RRC_E => {
+            rrc_register(motherboard, &RegByte::E);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RRC_H => {
+            rrc_register(motherboard, &RegByte::H);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RRC_L => {
+            rrc_register(motherboard, &RegByte::L);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RRC_HLcontents => {
+            let hl_address = motherboard.registers.read_word(&RegWord::HL);
+            let bit0 = motherboard.memory.read_byte(hl_address) & 0b0000_0001;
+            let rotated_register = motherboard.memory.read_byte(hl_address).rotate_right(1);
+            motherboard.memory.write_byte(hl_address, rotated_register);
+
+            motherboard
+                .registers
+                .write_flag(RegFlag::Zero, rotated_register == 0);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Subtraction, false);
+            motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Carry, bit0 == 0b0000_0001);
+            motherboard.clock.cycle_clock(4);
+        }
+        PrefixOpCode::RRC_A => {
+            rrc_register(motherboard, &RegByte::A);
+            motherboard.clock.cycle_clock(2);
+        }
+        // 1x
+        PrefixOpCode::RL_B => {
+            rl_register(motherboard, &RegByte::B);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RL_C => {
+            rl_register(motherboard, &RegByte::C);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RL_D => {
+            rl_register(motherboard, &RegByte::D);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RL_E => {
+            rl_register(motherboard, &RegByte::E);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RL_H => {
+            rl_register(motherboard, &RegByte::H);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RL_L => {
+            rl_register(motherboard, &RegByte::L);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RL_HLcontents => {
+            let hl_address = motherboard.registers.read_word(&RegWord::HL);
+            let bit7 = motherboard.memory.read_byte(hl_address) & 0b1000_0000;
+            let mut rotated_register = motherboard.memory.read_byte(hl_address).rotate_left(1);
+            if motherboard.registers.read_flag(RegFlag::Carry) == true {
+                rotated_register = rotated_register | 0b0000_0001;
+            } else {
+                rotated_register = rotated_register & 0b1111_1110
+            }
+            motherboard.memory.write_byte(hl_address, rotated_register);
+
+            motherboard
+                .registers
+                .write_flag(RegFlag::Zero, rotated_register == 0);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Subtraction, false);
+            motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Carry, bit7 == 0b1000_0000);
+            motherboard.clock.cycle_clock(4);
+        }
+        PrefixOpCode::RL_A => {
+            rl_register(motherboard, &RegByte::A);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RR_B => {
+            rr_register(motherboard, &RegByte::B);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RR_C => {
+            rr_register(motherboard, &RegByte::C);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RR_D => {
+            rr_register(motherboard, &RegByte::D);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RR_E => {
+            rr_register(motherboard, &RegByte::E);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RR_H => {
+            rr_register(motherboard, &RegByte::H);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RR_L => {
+            rr_register(motherboard, &RegByte::L);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RR_HLcontents => {
+            let hl_address = motherboard.registers.read_word(&RegWord::HL);
+            let bit0 = motherboard.memory.read_byte(hl_address) & 0b0000_0001;
+            let mut rotated_register = motherboard.memory.read_byte(hl_address).rotate_right(1);
+            if motherboard.registers.read_flag(RegFlag::Carry) == true {
+                rotated_register = rotated_register | 0b1000_0000;
+            } else {
+                rotated_register = rotated_register & 0b0111_1111
+            }
+            motherboard.memory.write_byte(hl_address, rotated_register);
+
+            motherboard
+                .registers
+                .write_flag(RegFlag::Zero, rotated_register == 0);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Subtraction, false);
+            motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Carry, bit0 == 0b0000_0001);
+            motherboard.clock.cycle_clock(4);
+        }
+        PrefixOpCode::RR_A => {
+            rr_register(motherboard, &RegByte::A);
+            motherboard.clock.cycle_clock(2);
+        }
+        // 2x
+        PrefixOpCode::SLA_B => {
+            sla_register(motherboard, &RegByte::B);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SLA_C => {
+            sla_register(motherboard, &RegByte::C);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SLA_D => {
+            sla_register(motherboard, &RegByte::D);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SLA_E => {
+            sla_register(motherboard, &RegByte::E);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SLA_H => {
+            sla_register(motherboard, &RegByte::H);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SLA_L => {
+            sla_register(motherboard, &RegByte::L);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SLA_HLcontents => {
+            let hl_address = motherboard.registers.read_word(&RegWord::HL);
+            let bit7 = motherboard.memory.read_byte(hl_address) & 0b1000_0000;
+            let shifted_register = motherboard.memory.read_byte(hl_address) << 1;
+
+            motherboard.memory.write_byte(hl_address, shifted_register);
+
+            motherboard
+                .registers
+                .write_flag(RegFlag::Zero, shifted_register == 0);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Subtraction, false);
+            motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Carry, bit7 == 0b1000_0000);
+            motherboard.clock.cycle_clock(4);
+        }
+        PrefixOpCode::SLA_A => {
+            sla_register(motherboard, &RegByte::A);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SRA_B => {
+            sra_register(motherboard, &RegByte::B);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SRA_C => {
+            sra_register(motherboard, &RegByte::C);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SRA_D => {
+            sra_register(motherboard, &RegByte::D);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SRA_E => {
+            sra_register(motherboard, &RegByte::E);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SRA_H => {
+            sra_register(motherboard, &RegByte::H);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SRA_L => {
+            sra_register(motherboard, &RegByte::L);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SRA_HLcontents => {
+            let hl_address = motherboard.registers.read_word(&RegWord::HL);
+            let bit7 = motherboard.memory.read_byte(hl_address) & 0b1000_0000;
+            let bit0 = motherboard.memory.read_byte(hl_address) & 0b0000_0001;
+            let shifted_register = (motherboard.memory.read_byte(hl_address) >> 1) | bit7;
+
+            motherboard.memory.write_byte(hl_address, shifted_register);
+
+            motherboard
+                .registers
+                .write_flag(RegFlag::Zero, shifted_register == 0);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Subtraction, false);
+            motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Carry, bit0 == 0b0000_0001);
+            motherboard.clock.cycle_clock(4);
+        }
+        PrefixOpCode::SRA_A => {
+            sra_register(motherboard, &RegByte::A);
+            motherboard.clock.cycle_clock(2);
+        }
+        // 3x
+        PrefixOpCode::SWAP_B => {
+            swap_register(motherboard, &RegByte::B);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SWAP_C => {
+            swap_register(motherboard, &RegByte::C);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SWAP_D => {
+            swap_register(motherboard, &RegByte::D);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SWAP_E => {
+            swap_register(motherboard, &RegByte::E);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SWAP_H => {
+            swap_register(motherboard, &RegByte::H);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SWAP_L => {
+            swap_register(motherboard, &RegByte::L);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SWAP_HLcontents => {
+            let hl_address = motherboard.registers.read_word(&RegWord::HL);
+            let rotated_register = motherboard.memory.read_byte(hl_address).rotate_right(4);
+
+            motherboard.memory.write_byte(hl_address, rotated_register);
+
+            motherboard
+                .registers
+                .write_flag(RegFlag::Zero, rotated_register == 0);
+            motherboard
+                .registers
+                .write_flag(RegFlag::Subtraction, false);
+            motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+            motherboard.registers.write_flag(RegFlag::Carry, false);
+            motherboard.clock.cycle_clock(4);
+        }
+        PrefixOpCode::SWAP_A => {
+            swap_register(motherboard, &RegByte::A);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SRL_B => {
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SRL_C => {
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SRL_D => {
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SRL_E => {
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SRL_H => {
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SRL_L => {
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SRL_HLcontents => {
+            motherboard.clock.cycle_clock(4);
+        }
+        PrefixOpCode::SRL_A => {
+            motherboard.clock.cycle_clock(2);
+        }
+        _ => panic!("ERROR::Unsupposed prefix opcode. Yoinked by Saharan Tiger Claw."),
+    }
+}
+
 // Helper Functions
 // Load/Get Helper Functions
 pub fn load_byte_to_virtual_register_target(
@@ -2180,4 +2547,137 @@ pub fn fast_reset_to_address(motherboard: &mut motherboard::Motherboard, address
 
     // Fast Jump (aka reset) to PC == 0x0008
     load_word_to_16bit_register(motherboard, address, &RegWord::PC);
+}
+
+// Prefix OpCode Functions
+pub fn rlc_register(motherboard: &mut motherboard::Motherboard, register: &RegByte) {
+    let bit7 = motherboard.registers.read_byte(register) & 0b1000_0000;
+    let rotated_register = motherboard.registers.read_byte(register).rotate_left(1);
+    motherboard.registers.write_byte(register, rotated_register);
+
+    motherboard
+        .registers
+        .write_flag(RegFlag::Zero, rotated_register == 0);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Subtraction, false);
+    motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Carry, bit7 == 0b1000_0000);
+}
+
+pub fn rrc_register(motherboard: &mut motherboard::Motherboard, register: &RegByte) {
+    let bit0 = motherboard.registers.read_byte(register) & 0b0000_0001;
+    let rotated_register = motherboard.registers.read_byte(register).rotate_right(1);
+    motherboard.registers.write_byte(register, rotated_register);
+
+    motherboard
+        .registers
+        .write_flag(RegFlag::Zero, rotated_register == 0);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Subtraction, false);
+    motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Carry, bit0 == 0b0000_0001);
+}
+
+pub fn rl_register(motherboard: &mut motherboard::Motherboard, register: &RegByte) {
+    let bit7 = motherboard.registers.read_byte(register) & 0b1000_0000;
+    let mut rotated_register = motherboard.registers.read_byte(register).rotate_left(1);
+    if motherboard.registers.read_flag(RegFlag::Carry) == true {
+        rotated_register = rotated_register | 0b0000_0001;
+    } else {
+        rotated_register = rotated_register & 0b1111_1110
+    }
+
+    motherboard.registers.write_byte(register, rotated_register);
+
+    motherboard
+        .registers
+        .write_flag(RegFlag::Zero, rotated_register == 0);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Subtraction, false);
+    motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Carry, bit7 == 0b1000_0000);
+}
+
+pub fn rr_register(motherboard: &mut motherboard::Motherboard, register: &RegByte) {
+    let bit0 = motherboard.registers.read_byte(register) & 0b0000_0001;
+    let mut rotated_register = motherboard.registers.read_byte(register).rotate_right(1);
+    if motherboard.registers.read_flag(RegFlag::Carry) == true {
+        rotated_register = rotated_register | 0b1000_0000;
+    } else {
+        rotated_register = rotated_register & 0b0111_1111
+    }
+
+    motherboard.registers.write_byte(register, rotated_register);
+
+    motherboard
+        .registers
+        .write_flag(RegFlag::Zero, rotated_register == 0);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Subtraction, false);
+    motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Carry, bit0 == 0b0000_0001);
+}
+
+pub fn sla_register(motherboard: &mut motherboard::Motherboard, register: &RegByte) {
+    let bit7 = motherboard.registers.read_byte(register) & 0b1000_0000;
+    let shifted_register = motherboard.registers.read_byte(register) << 1;
+
+    motherboard.registers.write_byte(register, shifted_register);
+
+    motherboard
+        .registers
+        .write_flag(RegFlag::Zero, shifted_register == 0);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Subtraction, false);
+    motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Carry, bit7 == 0b1000_0000);
+}
+
+pub fn sra_register(motherboard: &mut motherboard::Motherboard, register: &RegByte) {
+    let bit7 = motherboard.registers.read_byte(register) & 0b1000_0000;
+    let bit0 = motherboard.registers.read_byte(register) & 0b0000_0001;
+    let shifted_register = (motherboard.registers.read_byte(register) >> 1) | bit7;
+
+    motherboard.registers.write_byte(register, shifted_register);
+
+    motherboard
+        .registers
+        .write_flag(RegFlag::Zero, shifted_register == 0);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Subtraction, false);
+    motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Carry, bit0 == 0b0000_0001);
+}
+
+pub fn swap_register(motherboard: &mut motherboard::Motherboard, register: &RegByte) {
+    let rotated_register = motherboard.registers.read_byte(register).rotate_right(4);
+
+    motherboard.registers.write_byte(register, rotated_register);
+
+    motherboard
+        .registers
+        .write_flag(RegFlag::Zero, rotated_register == 0);
+    motherboard
+        .registers
+        .write_flag(RegFlag::Subtraction, false);
+    motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+    motherboard.registers.write_flag(RegFlag::Carry, false);
 }
