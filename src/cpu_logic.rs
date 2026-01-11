@@ -2445,6 +2445,331 @@ pub fn execute_prefix_opcode(motherboard: &mut motherboard::Motherboard, code: P
             bit_check_register(motherboard, &RegByte::A, 7);
             motherboard.clock.cycle_clock(2);
         }
+        // 8x
+        PrefixOpCode::RES_0_B => {
+            bit_reset_register(motherboard, &RegByte::B, 0);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_0_C => {
+            bit_reset_register(motherboard, &RegByte::C, 0);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_0_D => {
+            bit_reset_register(motherboard, &RegByte::D, 0);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_0_E => {
+            bit_reset_register(motherboard, &RegByte::E, 0);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_0_H => {
+            bit_reset_register(motherboard, &RegByte::H, 0);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_0_L => {
+            bit_reset_register(motherboard, &RegByte::L, 0);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_0_HLcontents => {
+            bit_reset_hl_address_register(motherboard, 0);
+            motherboard.clock.cycle_clock(4);
+        }
+        PrefixOpCode::RES_0_A => {
+            bit_reset_register(motherboard, &RegByte::A, 0);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_1_B => {
+            bit_reset_register(motherboard, &RegByte::B, 1);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_1_C => {
+            bit_reset_register(motherboard, &RegByte::C, 1);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_1_D => {
+            bit_reset_register(motherboard, &RegByte::D, 1);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_1_E => {
+            bit_reset_register(motherboard, &RegByte::E, 1);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_1_H => {
+            bit_reset_register(motherboard, &RegByte::H, 1);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_1_L => {
+            bit_reset_register(motherboard, &RegByte::L, 1);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_1_HLcontents => {
+            bit_reset_hl_address_register(motherboard, 1);
+            motherboard.clock.cycle_clock(4);
+        }
+        PrefixOpCode::RES_1_A => {
+            bit_reset_register(motherboard, &RegByte::A, 1);
+            motherboard.clock.cycle_clock(2);
+        }
+        // 9x
+        PrefixOpCode::RES_2_B => {
+            bit_reset_register(motherboard, &RegByte::B, 2);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_2_C => {
+            bit_reset_register(motherboard, &RegByte::C, 2);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_2_D => {
+            bit_reset_register(motherboard, &RegByte::D, 2);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_2_E => {
+            bit_reset_register(motherboard, &RegByte::E, 2);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_2_H => {
+            bit_reset_register(motherboard, &RegByte::H, 2);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_2_L => {
+            bit_reset_register(motherboard, &RegByte::L, 2);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_2_HLcontents => {
+            bit_reset_hl_address_register(motherboard, 2);
+            motherboard.clock.cycle_clock(4);
+        }
+        PrefixOpCode::RES_2_A => {
+            bit_reset_register(motherboard, &RegByte::A, 2);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_3_B => {
+            bit_reset_register(motherboard, &RegByte::B, 3);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_3_C => {
+            bit_reset_register(motherboard, &RegByte::C, 3);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_3_D => {
+            bit_reset_register(motherboard, &RegByte::D, 3);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_3_E => {
+            bit_reset_register(motherboard, &RegByte::E, 3);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_3_H => {
+            bit_reset_register(motherboard, &RegByte::H, 3);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_3_L => {
+            bit_reset_register(motherboard, &RegByte::L, 3);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_3_HLcontents => {
+            bit_reset_hl_address_register(motherboard, 3);
+            motherboard.clock.cycle_clock(4);
+        }
+        PrefixOpCode::RES_3_A => {
+            bit_reset_register(motherboard, &RegByte::A, 3);
+            motherboard.clock.cycle_clock(2);
+        }
+        // Ax
+        PrefixOpCode::RES_4_B => {
+            bit_reset_register(motherboard, &RegByte::B, 4);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_4_C => {
+            bit_reset_register(motherboard, &RegByte::C, 4);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_4_D => {
+            bit_reset_register(motherboard, &RegByte::D, 4);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_4_E => {
+            bit_reset_register(motherboard, &RegByte::E, 4);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_4_H => {
+            bit_reset_register(motherboard, &RegByte::H, 4);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_4_L => {
+            bit_reset_register(motherboard, &RegByte::L, 4);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_4_HLcontents => {
+            bit_reset_hl_address_register(motherboard, 4);
+            motherboard.clock.cycle_clock(4);
+        }
+        PrefixOpCode::RES_4_A => {
+            bit_reset_register(motherboard, &RegByte::A, 4);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_5_B => {
+            bit_reset_register(motherboard, &RegByte::B, 5);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_5_C => {
+            bit_reset_register(motherboard, &RegByte::C, 5);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_5_D => {
+            bit_reset_register(motherboard, &RegByte::D, 5);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_5_E => {
+            bit_reset_register(motherboard, &RegByte::E, 5);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_5_H => {
+            bit_reset_register(motherboard, &RegByte::H, 5);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_5_L => {
+            bit_reset_register(motherboard, &RegByte::L, 5);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_5_HLcontents => {
+            bit_reset_hl_address_register(motherboard, 5);
+            motherboard.clock.cycle_clock(4);
+        }
+        PrefixOpCode::RES_5_A => {
+            bit_reset_register(motherboard, &RegByte::A, 5);
+            motherboard.clock.cycle_clock(2);
+        }
+        // Bx
+        PrefixOpCode::RES_6_B => {
+            bit_reset_register(motherboard, &RegByte::B, 6);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_6_C => {
+            bit_reset_register(motherboard, &RegByte::C, 6);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_6_D => {
+            bit_reset_register(motherboard, &RegByte::D, 6);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_6_E => {
+            bit_reset_register(motherboard, &RegByte::E, 6);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_6_H => {
+            bit_reset_register(motherboard, &RegByte::H, 6);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_6_L => {
+            bit_reset_register(motherboard, &RegByte::L, 6);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_6_HLcontents => {
+            bit_reset_hl_address_register(motherboard, 6);
+            motherboard.clock.cycle_clock(4);
+        }
+        PrefixOpCode::RES_6_A => {
+            bit_reset_register(motherboard, &RegByte::A, 6);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_7_B => {
+            bit_reset_register(motherboard, &RegByte::B, 7);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_7_C => {
+            bit_reset_register(motherboard, &RegByte::C, 7);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_7_D => {
+            bit_reset_register(motherboard, &RegByte::D, 7);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_7_E => {
+            bit_reset_register(motherboard, &RegByte::E, 7);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_7_H => {
+            bit_reset_register(motherboard, &RegByte::H, 7);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_7_L => {
+            bit_reset_register(motherboard, &RegByte::L, 7);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::RES_7_HLcontents => {
+            bit_reset_hl_address_register(motherboard, 7);
+            motherboard.clock.cycle_clock(4);
+        }
+        PrefixOpCode::RES_7_A => {
+            bit_reset_register(motherboard, &RegByte::A, 7);
+            motherboard.clock.cycle_clock(2);
+        }
+        // Cx
+        PrefixOpCode::SET_0_B => {
+            bit_set_register(motherboard, &RegByte::B, 0);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SET_0_C => {
+            bit_set_register(motherboard, &RegByte::C, 0);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SET_0_D => {
+            bit_set_register(motherboard, &RegByte::D, 0);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SET_0_E => {
+            bit_set_register(motherboard, &RegByte::E, 0);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SET_0_H => {
+            bit_set_register(motherboard, &RegByte::H, 0);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SET_0_L => {
+            bit_set_register(motherboard, &RegByte::L, 0);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SET_0_HLcontents => {
+            bit_set_hl_address_register(motherboard, 0);
+            motherboard.clock.cycle_clock(4);
+        }
+        PrefixOpCode::SET_0_A => {
+            bit_set_register(motherboard, &RegByte::A, 0);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SET_1_B => {
+            bit_set_register(motherboard, &RegByte::B, 1);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SET_1_C => {
+            bit_set_register(motherboard, &RegByte::C, 1);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SET_1_D => {
+            bit_set_register(motherboard, &RegByte::D, 1);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SET_1_E => {
+            bit_set_register(motherboard, &RegByte::E, 1);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SET_1_H => {
+            bit_set_register(motherboard, &RegByte::H, 1);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SET_1_L => {
+            bit_set_register(motherboard, &RegByte::L, 1);
+            motherboard.clock.cycle_clock(2);
+        }
+        PrefixOpCode::SET_1_HLcontents => {
+            bit_set_hl_address_register(motherboard, 1);
+            motherboard.clock.cycle_clock(4);
+        }
+        PrefixOpCode::SET_1_A => {
+            bit_set_register(motherboard, &RegByte::A, 1);
+            motherboard.clock.cycle_clock(2);
+        }
         _ => panic!("ERROR::Unsupposed prefix opcode. Yoinked by Saharan Tiger Claw."),
     }
 }
@@ -2984,7 +3309,7 @@ pub fn srl_register(motherboard: &mut motherboard::Motherboard, register: &RegBy
 }
 
 pub fn bit_check_register(motherboard: &mut motherboard::Motherboard, register: &RegByte, bit: u8) {
-    if bit > 7 || bit < 0 {
+    if bit > 7 {
         panic!("ERROR::Should only be checking bits 0-7! Yoinked by Tint's Claw!");
     }
 
@@ -3004,7 +3329,7 @@ pub fn bit_check_register(motherboard: &mut motherboard::Motherboard, register: 
 }
 
 pub fn bit_check_hl_address_register(motherboard: &mut motherboard::Motherboard, bit: u8) {
-    if bit > 7 || bit < 0 {
+    if bit > 7 {
         panic!("ERROR::Should only be checking bits 0-7! Yoinked by Tint's Claw!");
     }
 
@@ -3025,4 +3350,56 @@ pub fn bit_check_hl_address_register(motherboard: &mut motherboard::Motherboard,
         .registers
         .write_flag(RegFlag::Subtraction, false);
     motherboard.registers.write_flag(RegFlag::HalfCarry, true);
+}
+
+pub fn bit_reset_register(motherboard: &mut motherboard::Motherboard, register: &RegByte, bit: u8) {
+    if bit > 7 {
+        panic!("ERROR::Should only be checking bits 0-7! Yoinked by Tint's Claw!");
+    }
+
+    let bit_mask: u8 = 0b1111_1110_u8.rotate_left(bit.into());
+    let new_byte = bit_mask & motherboard.registers.read_byte(register);
+    motherboard.registers.write_byte(register, new_byte);
+}
+
+pub fn bit_reset_hl_address_register(motherboard: &mut motherboard::Motherboard, bit: u8) {
+    if bit > 7 {
+        panic!("ERROR::Should only be checking bits 0-7! Yoinked by Tint's Claw!");
+    }
+
+    let bit_mask: u8 = 0b1111_1110_u8.rotate_left(bit.into());
+    let new_byte = bit_mask
+        & motherboard
+            .memory
+            .read_byte(motherboard.registers.read_word(&RegWord::HL));
+
+    motherboard
+        .memory
+        .write_byte(motherboard.registers.read_word(&RegWord::HL), new_byte);
+}
+
+pub fn bit_set_register(motherboard: &mut motherboard::Motherboard, register: &RegByte, bit: u8) {
+    if bit > 7 {
+        panic!("ERROR::Should only be checking bits 0-7! Yoinked by Tint's Claw!");
+    }
+
+    let bit_mask: u8 = 0b0000_0001_u8.rotate_left(bit.into());
+    let new_byte = bit_mask | motherboard.registers.read_byte(register);
+    motherboard.registers.write_byte(register, new_byte);
+}
+
+pub fn bit_set_hl_address_register(motherboard: &mut motherboard::Motherboard, bit: u8) {
+    if bit > 7 {
+        panic!("ERROR::Should only be checking bits 0-7! Yoinked by Tint's Claw!");
+    }
+
+    let bit_mask: u8 = 0b0000_0001_u8.rotate_left(bit.into());
+    let new_byte = bit_mask
+        | motherboard
+            .memory
+            .read_byte(motherboard.registers.read_word(&RegWord::HL));
+
+    motherboard
+        .memory
+        .write_byte(motherboard.registers.read_word(&RegWord::HL), new_byte);
 }
