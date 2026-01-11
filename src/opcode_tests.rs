@@ -4718,4 +4718,264 @@ mod tests {
         assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), true);
         assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
     }
+
+    #[test]
+    fn bit4_sets() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        // Register A
+        motherboard.registers.write_byte(&RegByte::A, 0b1101_1011);
+        motherboard.registers.write_flag(RegFlag::Subtraction, true);
+        motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+        motherboard.registers.write_flag(RegFlag::Carry, true);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_4_A);
+
+        assert_eq!(motherboard.registers.read_byte(&RegByte::A), 0b1101_1011);
+
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), true);
+
+        motherboard.registers.write_byte(&RegByte::A, 0b1110_1000);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_4_A);
+
+        assert_eq!(motherboard.registers.read_byte(&RegByte::A), 0b1111_1000);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), true);
+
+        // Register C
+        motherboard.registers.write_byte(&RegByte::C, 0b0110_0001);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_4_C);
+
+        assert_eq!(motherboard.registers.read_byte(&RegByte::C), 0b0111_0001);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), true);
+
+        // Register H
+        motherboard.registers.write_byte(&RegByte::H, 0b0000_0000);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_4_H);
+
+        assert_eq!(motherboard.registers.read_byte(&RegByte::H), 0b0001_0000);
+
+        motherboard.registers.write_byte(&RegByte::H, 0b0110_1100);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_4_H);
+
+        assert_eq!(motherboard.registers.read_byte(&RegByte::H), 0b0111_1100);
+
+        // Register B
+        motherboard.registers.write_byte(&RegByte::B, 0b1111_1111);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_4_B);
+
+        assert_eq!(motherboard.registers.read_byte(&RegByte::B), 0b1111_1111);
+
+        motherboard.registers.write_byte(&RegByte::B, 0b0110_0110);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_4_B);
+
+        assert_eq!(motherboard.registers.read_byte(&RegByte::B), 0b0111_0110);
+    }
+
+    #[test]
+    fn bit4_hl_address_set() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        motherboard.registers.write_word(&RegWord::HL, 0xFFAA);
+        motherboard.memory.write_byte(0xFFAA, 0b1010_0101);
+
+        motherboard.registers.write_flag(RegFlag::Zero, true);
+        motherboard.registers.write_flag(RegFlag::Subtraction, true);
+        motherboard.registers.write_flag(RegFlag::HalfCarry, true);
+        motherboard.registers.write_flag(RegFlag::Carry, false);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_4_HLcontents);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::HL), 0xFFAA);
+        assert_eq!(motherboard.memory.read_byte(0xFFAA), 0b1011_0101);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
+
+        motherboard.memory.write_byte(0xFFAA, 0b1111_1110);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_4_HLcontents);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::HL), 0xFFAA);
+        assert_eq!(motherboard.memory.read_byte(0xFFAA), 0b1111_1110);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
+
+        motherboard.memory.write_byte(0xFFAA, 0b0100_1010);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_4_HLcontents);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::HL), 0xFFAA);
+        assert_eq!(motherboard.memory.read_byte(0xFFAA), 0b0101_1010);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
+
+        motherboard.memory.write_byte(0xFFAA, 0b1101_0000);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_4_HLcontents);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::HL), 0xFFAA);
+        assert_eq!(motherboard.memory.read_byte(0xFFAA), 0b1101_0000);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
+    }
+
+    #[test]
+    fn bit7_sets() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        // Register A
+        motherboard.registers.write_byte(&RegByte::A, 0b0101_1011);
+        motherboard.registers.write_flag(RegFlag::Subtraction, true);
+        motherboard.registers.write_flag(RegFlag::HalfCarry, false);
+        motherboard.registers.write_flag(RegFlag::Carry, true);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_7_A);
+
+        assert_eq!(motherboard.registers.read_byte(&RegByte::A), 0b1101_1011);
+
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), true);
+
+        motherboard.registers.write_byte(&RegByte::A, 0b1110_1000);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_7_A);
+
+        assert_eq!(motherboard.registers.read_byte(&RegByte::A), 0b1110_1000);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), true);
+
+        // Register C
+        motherboard.registers.write_byte(&RegByte::C, 0b0110_0001);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_7_C);
+
+        assert_eq!(motherboard.registers.read_byte(&RegByte::C), 0b1110_0001);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), false);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), true);
+
+        // Register H
+        motherboard.registers.write_byte(&RegByte::H, 0b0000_0000);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_7_H);
+
+        assert_eq!(motherboard.registers.read_byte(&RegByte::H), 0b1000_0000);
+
+        motherboard.registers.write_byte(&RegByte::H, 0b0110_1100);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_7_H);
+
+        assert_eq!(motherboard.registers.read_byte(&RegByte::H), 0b1110_1100);
+
+        // Register B
+        motherboard.registers.write_byte(&RegByte::B, 0b1111_1111);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_7_B);
+
+        assert_eq!(motherboard.registers.read_byte(&RegByte::B), 0b1111_1111);
+
+        motherboard.registers.write_byte(&RegByte::B, 0b1000_0000);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_7_B);
+
+        assert_eq!(motherboard.registers.read_byte(&RegByte::B), 0b1000_0000);
+    }
+
+    #[test]
+    fn bit7_hl_address_set() {
+        let mut motherboard = motherboard::Motherboard::new();
+
+        motherboard.registers.write_word(&RegWord::HL, 0xFFAA);
+        motherboard.memory.write_byte(0xFFAA, 0b1010_0101);
+
+        motherboard.registers.write_flag(RegFlag::Zero, true);
+        motherboard.registers.write_flag(RegFlag::Subtraction, true);
+        motherboard.registers.write_flag(RegFlag::HalfCarry, true);
+        motherboard.registers.write_flag(RegFlag::Carry, false);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_7_HLcontents);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::HL), 0xFFAA);
+        assert_eq!(motherboard.memory.read_byte(0xFFAA), 0b1010_0101);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
+
+        motherboard.memory.write_byte(0xFFAA, 0b0111_1110);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_7_HLcontents);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::HL), 0xFFAA);
+        assert_eq!(motherboard.memory.read_byte(0xFFAA), 0b1111_1110);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
+
+        motherboard.memory.write_byte(0xFFAA, 0b0100_1010);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_7_HLcontents);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::HL), 0xFFAA);
+        assert_eq!(motherboard.memory.read_byte(0xFFAA), 0b1100_1010);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
+
+        motherboard.memory.write_byte(0xFFAA, 0b1101_0000);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_7_HLcontents);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::HL), 0xFFAA);
+        assert_eq!(motherboard.memory.read_byte(0xFFAA), 0b1101_0000);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
+
+        motherboard.memory.write_byte(0xFFAA, 0b1000_0000);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_7_HLcontents);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::HL), 0xFFAA);
+        assert_eq!(motherboard.memory.read_byte(0xFFAA), 0b1000_0000);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
+
+        motherboard.memory.write_byte(0xFFAA, 0b0111_1111);
+
+        execute_prefix_opcode(&mut motherboard, PrefixOpCode::SET_7_HLcontents);
+
+        assert_eq!(motherboard.registers.read_word(&RegWord::HL), 0xFFAA);
+        assert_eq!(motherboard.memory.read_byte(0xFFAA), 0b1111_1111);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Zero), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Subtraction), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::HalfCarry), true);
+        assert_eq!(motherboard.registers.read_flag(RegFlag::Carry), false);
+    }
 }
