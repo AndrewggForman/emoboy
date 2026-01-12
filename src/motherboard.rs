@@ -4,7 +4,10 @@ use crate::{
     cartridge::Cartridge,
     clock::Clock,
     cpu::Cpu,
-    cpu_logic::{execute_one_byte_opcode, execute_three_byte_opcode, execute_two_byte_opcode},
+    cpu_logic::{
+        execute_one_byte_opcode, execute_prefix_opcode, execute_three_byte_opcode,
+        execute_two_byte_opcode,
+    },
     memory::Memory,
     opcode::OneByteOpCode,
     registers::{RegWord, Registers},
@@ -301,7 +304,7 @@ impl Motherboard {
             0xC9 => 1, // RET (TODO: ?)
             0xCA => 3, // JP Z a16
             // SPECIAL BELOW: PREFIX TO OTHER OPCODES
-            0xCB => 3, // PREFIX CB (TODO: technically a 2/3? since swaps opcodes and does with it)
+            0xCB => 2, // PREFIX CB (TODO: technically a 2/3? since swaps opcodes and does with it)
             0xCC => 3, // CALL Z a16
             0xCD => 3, // CALL (TODO: ?) a16
             0xCE => 2, // ADC A d8
@@ -393,31 +396,32 @@ impl Motherboard {
 
     // TODO: CURRENTLY EXISTS FOR TESTING
     fn perform_one_operation(&mut self) {
-        // println!(
-        //     "pc pre fetching next byte: {}",
-        //     self.registers.read_word(&RegWord::PC)
-        // );
         let instruction = self.fetch_next_byte();
-        // println!(
-        //     "pc post fetching next byte: {}",
-        //     self.registers.read_word(&RegWord::PC)
-        // );
         let instruction_length = Motherboard::get_instruction_length(instruction);
-        //println!("instruction: {}", instruction);
+
         match instruction_length {
             1 => {
                 execute_one_byte_opcode(self, instruction.into());
+                return;
             }
             2 => {
                 let byte1 = self.fetch_next_byte();
+                if instruction == 0xCB {
+                    execute_prefix_opcode(self, byte1.into());
+                    return;
+                }
                 execute_two_byte_opcode(self, instruction.into(), byte1);
+                return;
             }
             3 => {
                 let low_byte = self.fetch_next_byte();
                 let high_byte = self.fetch_next_byte();
                 execute_three_byte_opcode(self, instruction.into(), high_byte, low_byte);
+                return;
             }
-            _ => panic!("ERROR::"),
+            _ => panic!(
+                "ERROR::Testing perform_one_operation failed. Instruction length was neither 1, 2, or 3."
+            ),
         }
     }
 
