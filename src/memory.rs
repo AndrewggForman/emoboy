@@ -42,7 +42,7 @@ impl Memory {
         self.cartridge.load_rom_file(file_path);
     }
 
-    // TODO: Shouldn't we write to both the memory 
+    // TODO: Shouldn't we write to both the memory
     pub fn read_byte(&self, address: u16) -> u8 {
         match address {
             CARTRIDGE_ROM_BANK_0_START..=CARTRIDGE_ROM_BANK_N_END => {
@@ -79,7 +79,5 @@ impl Memory {
             _ => panic!("Unexpected Memory::write_byte {} {}", address, value),
         };
     }
-    pub fn print_bytes(&mut self, start_address: u16, end_address: u16) {
-        
-    }
+    pub fn print_bytes(&mut self, start_address: u16, end_address: u16) {}
 }

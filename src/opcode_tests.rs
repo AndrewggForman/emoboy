@@ -2,8 +2,6 @@
 mod tests {
     use crate::{cpu_logic::*, motherboard, opcode::*, registers::*};
 
-    use super::*;
-
     // Testing RLCA (rotate register A to the left and set carry bit as well)
     #[test]
     fn rotate_register_a_left_producing_carry() {

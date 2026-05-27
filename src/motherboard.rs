@@ -425,9 +425,9 @@ impl Motherboard {
         }
     }
 
-    fn perform_two_byte_instruction(&mut self) {
-        let opcode = self.fetch_next_byte();
-    }
+    // fn perform_two_byte_instruction(&mut self) {
+    //     let opcode = self.fetch_next_byte();
+    // }
 }
 
 #[cfg(test)]
