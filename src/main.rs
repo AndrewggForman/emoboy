@@ -9,6 +9,7 @@ mod cpu_logic;
 mod device_screen;
 mod gpu;
 mod memory;
+mod memory_tests;
 mod motherboard;
 mod opcode;
 mod opcode_tests;

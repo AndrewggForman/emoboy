@@ -41,6 +41,15 @@ impl Memory {
         self.cartridge.load_rom_file(file_path);
     }
 
+    // TODO: Look into removing cartridge module, redundant having to store the data in two separate places?
+    pub fn load_cartridge_rom_bank_0(&mut self) {
+        let mut counter = 0;
+        for byte in self.cartridge.bytes.clone() {
+            self.write_byte(counter + CARTRIDGE_ROM_BANK_0_START, byte);
+            counter += 1;
+        }
+    }
+
     pub fn read_byte(&self, address: u16) -> u8 {
         match address {
             CARTRIDGE_ROM_BANK_0_START..=CARTRIDGE_ROM_BANK_N_END => {
