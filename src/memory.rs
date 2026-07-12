@@ -1,6 +1,5 @@
 use crate::cartridge::Cartridge;
 
-// TODO: Check if memory banks are off by one (might need to add +1 t0 each of them aside from first? UNSURE)
 const CARTRIDGE_ROM_BANK_0_START: u16 = 0x0000;
 const CARTRIDGE_ROM_BANK_0_END: u16 = 0x3FFF;
 const CARTRIDGE_ROM_BANK_N_START: u16 = 0x4000;
@@ -42,7 +41,6 @@ impl Memory {
         self.cartridge.load_rom_file(file_path);
     }
 
-    // TODO: Shouldn't we write to both the memory
     pub fn read_byte(&self, address: u16) -> u8 {
         match address {
             CARTRIDGE_ROM_BANK_0_START..=CARTRIDGE_ROM_BANK_N_END => {
@@ -61,7 +59,6 @@ impl Memory {
         }
     }
 
-    // TODO: Look over/talk with tint (does this follow the endianness of the machine?)
     pub fn write_byte(&mut self, address: u16, value: u8) {
         match address {
             CARTRIDGE_ROM_BANK_0_START..=CARTRIDGE_ROM_BANK_N_END => {
@@ -76,8 +73,13 @@ impl Memory {
             IO_REGISTERS_START..=IO_REGISTERS_END => self._memory[address as usize] = value,
             HRAM_START..=HRAM_END => self._memory[address as usize] = value,
             IE_REGISTER => self._memory[address as usize] = value,
-            _ => panic!("Unexpected Memory::write_byte {} {}", address, value),
+            //_ => panic!("Unexpected Memory::write_byte {} {}", address, value),
         };
     }
-    pub fn print_bytes(&mut self, start_address: u16, end_address: u16) {}
+
+    pub fn print_bytes(&mut self, start_address: u16, end_address: u16) {
+        for address in start_address..(end_address + 1) {
+            println!("{:#x}: {}", address, self.read_byte(address));
+        }
+    }
 }
