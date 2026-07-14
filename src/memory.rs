@@ -83,6 +83,7 @@ impl Memory {
             HRAM_START..=HRAM_END => self._memory[address as usize] = value,
             IE_REGISTER => self._memory[address as usize] = value,
             //_ => panic!("Unexpected Memory::write_byte {} {}", address, value),
+            // ^ redundant
         };
     }
 
