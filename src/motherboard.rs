@@ -18,7 +18,6 @@ use crate::{
 // > turn it into public/learning experience.
 
 pub struct Motherboard {
-    // TODO: Yap with yomt. Making these public for now for the purpose of building unit tests.
     pub registers: Registers,
     pub memory: Memory,
     pub cartridge: Cartridge,
@@ -365,8 +364,6 @@ impl Motherboard {
             0xFF => 1, // RST 38H (TODO: I don't understand this one at all)
             _ => panic!("Unsupported instruction byte. Get the lobster claw!"),
         }
-
-        // TODO: Handle prefix opcode table memes.
     }
 
     fn execute_opcode(&mut self, instruction: u8, instruction_length: u8) {
@@ -425,9 +422,9 @@ impl Motherboard {
         }
     }
 
-    fn perform_two_byte_instruction(&mut self) {
-        let opcode = self.fetch_next_byte();
-    }
+    // fn perform_two_byte_instruction(&mut self) {
+    //     let opcode = self.fetch_next_byte();
+    // }
 }
 
 #[cfg(test)]
